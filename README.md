@@ -33,16 +33,16 @@ You'll need these before starting:
 ## Quick Start
 
 **What you need:**
-- A VPS (Virtual Private Server) - ~$6/month
-- Telegram bot token (free, from @BotFather)
-- Claude API key (pay-as-you-go, from Anthropic)
+- A VPS (Virtual Private Server)
+- Telegram bot token (from @BotFather)
+- Claude API key (from Anthropic)
 
 ### 1. Create a VPS
 
 **Recommended providers:**
-- [Hetzner Cloud](https://www.hetzner.com/cloud) - CX22 (~€6/mo)
-- [OVH](https://www.ovhcloud.com/) - VPS-1 (~$6/mo)
-- [DigitalOcean](https://www.digitalocean.com/) - Basic Droplet ($6/mo)
+- [Hetzner Cloud](https://www.hetzner.com/cloud)
+- [OVH](https://www.ovhcloud.com/)
+- [DigitalOcean](https://www.digitalocean.com/)
 
 **Specs:**
 - OS: Ubuntu 24.04
@@ -70,11 +70,7 @@ Go to [Anthropic Console](https://console.anthropic.com/):
 3. Click **Create Key**
 4. Save the key (format: `sk-ant-api03-...`)
 
-**Pricing options:**
-- **Pay-as-you-go:** ~$0.003 per 1K tokens (no subscription needed)
-- **With subscription:** If you have Claude Pro/Team, you can generate API keys and use your existing subscription credits
-
-**Alternative:** Use [OpenRouter](https://openrouter.ai/) for multi-model access
+**Note:** You can use pay-as-you-go or your existing Claude subscription
 
 ### 4. Run the Deploy Script
 
@@ -258,13 +254,7 @@ The deployment script includes basic security:
 
 ---
 
-## Cost Estimate
 
-**VPS:** $6-10/month  
-**Claude API:** ~$20-50/month (depends on usage)  
-**Total:** ~$30-60/month for a personal/light-use agent
-
----
 
 ## Contributing
 
