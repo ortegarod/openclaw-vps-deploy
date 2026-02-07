@@ -21,14 +21,21 @@ Deploy a production-ready OpenClaw instance to any Ubuntu VPS in ~10 minutes.
 
 ## Prerequisites
 
-- **VPS**: Ubuntu 24.04 server (any provider: Hetzner, OVH, DigitalOcean, etc.)
-- **SSH access**: Root access via SSH key
-- **Telegram bot**: Token from @BotFather
-- **API key**: Claude API key (Anthropic) or OpenRouter
+You'll need these before starting:
+
+1. **VPS** - Ubuntu 24.04 server from any provider (see step 1 below)
+2. **SSH key** - For secure access to your VPS ([How to generate](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent))
+3. **Telegram bot token** - From @BotFather (see step 2 below)
+4. **Claude API key** - From Anthropic Console (see step 3 below)
 
 ---
 
 ## Quick Start
+
+**What you need:**
+- A VPS (Virtual Private Server) - ~$6/month
+- Telegram bot token (free, from @BotFather)
+- Claude API key (pay-as-you-go, from Anthropic)
 
 ### 1. Create a VPS
 
@@ -54,7 +61,20 @@ Message [@BotFather](https://t.me/botfather) on Telegram:
 
 Save the token (format: `123456789:ABCdefGHIjklMNOpqrsTUVwxyz`)
 
-### 3. Run the Deploy Script
+### 3. Get a Claude API Key
+
+Go to [Anthropic Console](https://console.anthropic.com/):
+
+1. Sign up or log in
+2. Go to **API Keys** section
+3. Click **Create Key**
+4. Save the key (format: `sk-ant-api03-...`)
+
+**Pricing:** Pay-as-you-go (starts ~$0.003 per 1K tokens)
+
+**Alternative:** Use [OpenRouter](https://openrouter.ai/) for multi-model access
+
+### 4. Run the Deploy Script
 
 ```bash
 git clone https://github.com/kali-claw/openclaw-vps-deploy.git
@@ -73,7 +93,7 @@ cd openclaw-vps-deploy
 --user root                     # SSH user (default: root)
 ```
 
-### 4. Done!
+### 5. Done!
 
 The script will:
 1. SSH into your VPS
