@@ -45,7 +45,11 @@ Message [@BotFather](https://t.me/botfather) on Telegram:
 
 Save the token (format: `123456789:ABCdefGHIjklMNOpqrsTUVwxyz`)
 
-### 3. Get a Claude API Key
+### 3. Get Claude Authentication
+
+**Choose one option:**
+
+#### Option A: API Key (Pay-as-you-go)
 
 Go to [Anthropic Console](https://console.anthropic.com/):
 
@@ -54,9 +58,19 @@ Go to [Anthropic Console](https://console.anthropic.com/):
 3. Click **Create Key**
 4. Save the key (format: `sk-ant-api03-...`)
 
-**Note:** You can use pay-as-you-go or your existing Claude subscription
+#### Option B: Setup Token (Claude Subscription)
+
+If you have a Claude Pro or Claude Max subscription:
+
+1. Install Claude CLI on your local machine
+2. Run `claude setup-token`
+3. Copy the generated token
+
+**Note:** This uses your existing subscription instead of API billing
 
 ### 4. Run the Deploy Script
+
+**With API Key:**
 
 ```bash
 git clone https://github.com/kali-claw/openclaw-vps-deploy.git
@@ -68,10 +82,20 @@ cd openclaw-vps-deploy
   --api-key "YOUR_CLAUDE_API_KEY"
 ```
 
+**With Setup Token (Claude subscription):**
+
+```bash
+./deploy.sh \
+  --host YOUR_VPS_IP \
+  --telegram-token "YOUR_TELEGRAM_TOKEN" \
+  --setup-token "YOUR_SETUP_TOKEN"
+```
+
 Replace:
 - `YOUR_VPS_IP` with your VPS IP from step 1
 - `YOUR_TELEGRAM_TOKEN` with the token from step 2
-- `YOUR_CLAUDE_API_KEY` with the key from step 3
+- `YOUR_CLAUDE_API_KEY` with the API key from step 3A **OR**
+- `YOUR_SETUP_TOKEN` with the setup-token from step 3B
 
 ### 5. Done!
 
