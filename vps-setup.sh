@@ -1,8 +1,9 @@
 #!/bin/bash
 #
-# vps-setup-direct.sh - Direct OpenClaw installation (no Docker)
+# vps-setup.sh - Install OpenClaw on VPS (Official recommended method)
 #
-# Called by deploy.sh (don't run this manually)
+# Based on: https://docs.openclaw.ai/install
+# Uses the official installer script
 #
 
 set -e
@@ -13,7 +14,7 @@ API_KEY="$3"
 MODEL="$4"
 
 echo "========================================"
-echo "VPS Setup - Direct OpenClaw Installation"
+echo "OpenClaw VPS Setup"
 echo "========================================"
 echo "Hostname: $(hostname)"
 echo "Agent: $AGENT_NAME"
@@ -27,40 +28,43 @@ apt-get update -qq
 apt-get upgrade -y -qq
 apt-get install -y -qq curl git ufw
 
-# Configure firewall first
+# Configure firewall
 echo "→ Configuring firewall..."
 ufw --force enable
-ufw allow 22/tcp    # SSH
-ufw allow 80/tcp    # HTTP (for future webhooks)
-ufw allow 443/tcp   # HTTPS
+ufw allow 22/tcp
+ufw allow 80/tcp
+ufw allow 443/tcp
 ufw reload
 
 # Install OpenClaw using official installer
-echo "→ Installing OpenClaw (this installs Node.js if needed)..."
+echo "→ Installing OpenClaw (official installer)..."
 curl -fsSL https://openclaw.ai/install.sh | bash
 
-# Reload shell environment
+# Reload PATH
 export PATH="$HOME/.openclaw/bin:$PATH"
 source ~/.bashrc 2>/dev/null || true
 
 # Verify installation
 if command -v openclaw &> /dev/null; then
-    OPENCLAW_VERSION=$(openclaw --version 2>/dev/null || echo "unknown")
+    OPENCLAW_VERSION=$(openclaw --version 2>/dev/null || echo "installed")
     echo "✓ OpenClaw installed: $OPENCLAW_VERSION"
 else
-    echo "⚠️  OpenClaw command not found in PATH, but installation may have succeeded"
-    echo "Checking /root/.openclaw/bin..."
+    # Fallback: try direct path
     if [ -f "/root/.openclaw/bin/openclaw" ]; then
         export PATH="/root/.openclaw/bin:$PATH"
-        echo "✓ Found OpenClaw in /root/.openclaw/bin"
+        echo "✓ OpenClaw installed at /root/.openclaw/bin"
+    else
+        echo "❌ OpenClaw installation failed"
+        exit 1
     fi
 fi
 
-# Create config directory
-echo "→ Creating OpenClaw configuration..."
+# Create workspace directories
+echo "→ Creating workspace structure..."
 mkdir -p /root/.openclaw/workspace/memory
 
 # Create config.json
+echo "→ Creating OpenClaw configuration..."
 cat > /root/.openclaw/config.json <<CONFIG_EOF
 {
   "gateway": {
@@ -93,8 +97,6 @@ cat > /root/.openclaw/config.json <<CONFIG_EOF
 CONFIG_EOF
 
 # Create workspace files
-echo "→ Creating workspace structure..."
-
 cat > /root/.openclaw/workspace/IDENTITY.md <<'IDENTITY_EOF'
 # IDENTITY.md
 
@@ -106,24 +108,11 @@ I am an AI agent powered by OpenClaw and Claude.
 
 ---
 
-## My Role
-
-I assist with:
-- Answering questions and providing information
-- Research and analysis
-- Document creation and editing
-- Task management and reminders
-- Process automation
-
----
-
 *Edit this file to customize your agent's identity*
 IDENTITY_EOF
 
 cat > /root/.openclaw/workspace/SOUL.md <<'SOUL_EOF'
 # SOUL.md
-
-*This file defines your agent's personality and working style.*
 
 ## How I Work
 
@@ -131,12 +120,6 @@ cat > /root/.openclaw/workspace/SOUL.md <<'SOUL_EOF'
 - **Clear communicator** — I explain things simply
 - **Proactive** — I suggest improvements and automations
 - **Trustworthy** — I handle information with care
-
-## Boundaries
-
-- Ask before taking sensitive actions
-- Verify important information
-- Respect privacy and confidentiality
 
 ---
 
@@ -152,10 +135,6 @@ Information about my user(s).
 - **Timezone:** [Timezone]
 - **Preferences:** [Communication style, working hours, etc.]
 
-## Context
-
-[Add relevant context about your work, projects, preferences]
-
 ---
 
 *Update this with information to help your agent serve you better*
@@ -166,10 +145,6 @@ cat > /root/.openclaw/workspace/TOOLS.md <<'TOOLS_EOF'
 
 Installed skills and tools will be documented here.
 
-## Available Skills
-
-[Will be populated as you add skills]
-
 ---
 
 *Track your agent's capabilities here*
@@ -179,10 +154,6 @@ cat > /root/.openclaw/workspace/MEMORY.md <<'MEMORY_EOF'
 # MEMORY.md
 
 Long-term memory and important context.
-
-## Important Information
-
-[Facts, preferences, decisions to remember]
 
 ---
 
@@ -196,7 +167,7 @@ cat > "/root/.openclaw/workspace/memory/$TODAY.md" <<DAILY_EOF
 
 ## Setup
 
-OpenClaw agent deployed and configured (direct installation).
+OpenClaw agent deployed (official installer method).
 
 Agent name: $AGENT_NAME
 Model: $MODEL
@@ -204,10 +175,10 @@ Model: $MODEL
 Ready to assist.
 DAILY_EOF
 
-# Find openclaw binary path
+# Find openclaw binary
 OPENCLAW_BIN=$(which openclaw 2>/dev/null || echo "/root/.openclaw/bin/openclaw")
 
-# Create systemd service for auto-restart
+# Create systemd service
 echo "→ Creating systemd service..."
 cat > /etc/systemd/system/openclaw.service <<SERVICE_EOF
 [Unit]
@@ -229,7 +200,7 @@ StandardError=journal
 WantedBy=multi-user.target
 SERVICE_EOF
 
-# Enable and start service
+# Enable and start
 systemctl daemon-reload
 systemctl enable openclaw
 systemctl start openclaw
@@ -243,25 +214,20 @@ if systemctl is-active --quiet openclaw; then
   echo "✓ Gateway is running"
 else
   echo "⚠️  Gateway may not be running properly"
-  echo "Status:"
   systemctl status openclaw --no-pager
 fi
 
 echo ""
 echo "========================================"
-echo "✅ VPS Setup Complete!"
+echo "✅ Setup Complete!"
 echo "========================================"
 echo ""
-echo "OpenClaw is running on port 18789"
-echo "Telegram bot should be active"
-echo ""
-echo "Configuration:"
-echo "  Config: /root/.openclaw/config.json"
-echo "  Workspace: /root/.openclaw/workspace"
-echo "  Service: systemctl status openclaw"
+echo "Configuration: /root/.openclaw/config.json"
+echo "Workspace: /root/.openclaw/workspace"
 echo ""
 echo "Useful commands:"
 echo "  Check logs: journalctl -u openclaw -f"
 echo "  Restart: systemctl restart openclaw"
 echo "  Stop: systemctl stop openclaw"
+echo "  Status: systemctl status openclaw"
 echo ""
