@@ -235,19 +235,19 @@ ssh root@203.0.113.46 'cd /opt/openclaw && docker compose restart openclaw-gatew
 ### Check if gateway is running
 
 ```bash
-ssh root@203.0.113.45 'docker compose -f /opt/openclaw/docker-compose.yml ps'
+ssh root@203.0.113.45 'cd /root/openclaw && docker compose ps'
 ```
 
 ### View logs
 
 ```bash
-ssh root@203.0.113.45 'docker compose -f /opt/openclaw/docker-compose.yml logs -f openclaw-gateway'
+ssh root@203.0.113.45 'cd /root/openclaw && docker compose logs -f openclaw-gateway'
 ```
 
 ### Restart gateway
 
 ```bash
-ssh root@203.0.113.45 'cd /opt/openclaw && docker compose restart openclaw-gateway'
+ssh root@203.0.113.45 'cd /root/openclaw && docker compose restart openclaw-gateway'
 ```
 
 ### Test Telegram connection
