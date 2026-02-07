@@ -70,7 +70,9 @@ Go to [Anthropic Console](https://console.anthropic.com/):
 3. Click **Create Key**
 4. Save the key (format: `sk-ant-api03-...`)
 
-**Pricing:** Pay-as-you-go (starts ~$0.003 per 1K tokens)
+**Pricing options:**
+- **Pay-as-you-go:** ~$0.003 per 1K tokens (no subscription needed)
+- **With subscription:** If you have Claude Pro/Team, you can generate API keys and use your existing subscription credits
 
 **Alternative:** Use [OpenRouter](https://openrouter.ai/) for multi-model access
 
