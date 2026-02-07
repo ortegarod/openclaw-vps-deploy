@@ -1,7 +1,8 @@
 #!/bin/bash
 #
-# vps-setup.sh - Runs on the VPS to install OpenClaw
+# vps-setup-docker.sh - Install OpenClaw on VPS (Official Docker method)
 #
+# Based on: https://docs.openclaw.ai/install/hetzner
 # Called by deploy.sh (don't run this manually)
 #
 
@@ -13,7 +14,7 @@ API_KEY="$3"
 MODEL="$4"
 
 echo "========================================"
-echo "VPS Setup - OpenClaw Installation"
+echo "OpenClaw VPS Setup (Docker)"
 echo "========================================"
 echo "Hostname: $(hostname)"
 echo "Agent: $AGENT_NAME"
@@ -25,59 +26,103 @@ echo "→ Updating system packages..."
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
 apt-get upgrade -y -qq
-apt-get install -y -qq curl git docker.io docker-compose ufw
+apt-get install -y -qq git curl ca-certificates ufw
 
-# Enable Docker
-echo "→ Enabling Docker..."
-systemctl enable docker >/dev/null 2>&1
-systemctl start docker
+# Install Docker (official method)
+echo "→ Installing Docker..."
+if ! command -v docker &> /dev/null; then
+    curl -fsSL https://get.docker.com | sh
+fi
+
+# Verify
+docker --version
+docker compose version
 
 # Configure firewall
 echo "→ Configuring firewall..."
 ufw --force enable
-ufw allow 22/tcp    # SSH
-ufw allow 80/tcp    # HTTP (for future webhooks)
-ufw allow 443/tcp   # HTTPS
+ufw allow 22/tcp
+ufw allow 80/tcp
+ufw allow 443/tcp
 ufw reload
 
-# Create OpenClaw directory
-echo "→ Setting up OpenClaw..."
-mkdir -p /opt/openclaw
-cd /opt/openclaw
+# Clone OpenClaw repository
+echo "→ Cloning OpenClaw repository..."
+if [ -d "/root/openclaw" ]; then
+    echo "Repository exists, pulling latest..."
+    cd /root/openclaw
+    git pull
+else
+    cd /root
+    git clone https://github.com/openclaw/openclaw.git
+    cd openclaw
+fi
+
+# Create persistent directories
+echo "→ Creating persistent directories..."
+mkdir -p /root/.openclaw
+mkdir -p /root/.openclaw/workspace
+
+# Set ownership (container runs as uid 1000)
+chown -R 1000:1000 /root/.openclaw
+chown -R 1000:1000 /root/.openclaw/workspace
+
+# Generate secrets
+GATEWAY_TOKEN=$(openssl rand -hex 32)
+KEYRING_PASSWORD=$(openssl rand -hex 32)
+
+# Create .env file
+echo "→ Creating environment configuration..."
+cd /root/openclaw
+cat > .env <<ENV_EOF
+OPENCLAW_IMAGE=openclaw:latest
+OPENCLAW_GATEWAY_TOKEN=$GATEWAY_TOKEN
+OPENCLAW_GATEWAY_BIND=lan
+OPENCLAW_GATEWAY_PORT=18789
+
+OPENCLAW_CONFIG_DIR=/root/.openclaw
+OPENCLAW_WORKSPACE_DIR=/root/.openclaw/workspace
+
+GOG_KEYRING_PASSWORD=$KEYRING_PASSWORD
+XDG_CONFIG_HOME=/home/node/.openclaw
+ENV_EOF
 
 # Create docker-compose.yml
+echo "→ Creating Docker Compose configuration..."
 cat > docker-compose.yml <<'COMPOSE_EOF'
-version: '3.8'
-
 services:
   openclaw-gateway:
-    image: ghcr.io/openclaw/openclaw:latest
-    container_name: openclaw-gateway
+    image: ${OPENCLAW_IMAGE}
+    build: .
     restart: unless-stopped
-    ports:
-      - "18789:18789"
-    volumes:
-      - /root/.openclaw:/home/node/.openclaw
-      - /root/.openclaw/workspace:/home/node/.openclaw/workspace
+    env_file:
+      - .env
     environment:
+      - HOME=/home/node
       - NODE_ENV=production
-    command: ["node", "dist/index.js", "gateway", "start", "--allow-unconfigured"]
-
-  openclaw-cli:
-    image: ghcr.io/openclaw/openclaw:latest
-    container_name: openclaw-cli
-    profiles: ["cli"]
+      - TERM=xterm-256color
+      - OPENCLAW_GATEWAY_BIND=${OPENCLAW_GATEWAY_BIND}
+      - OPENCLAW_GATEWAY_PORT=${OPENCLAW_GATEWAY_PORT}
+      - OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_GATEWAY_TOKEN}
+      - GOG_KEYRING_PASSWORD=${GOG_KEYRING_PASSWORD}
+      - XDG_CONFIG_HOME=${XDG_CONFIG_HOME}
+      - PATH=/home/linuxbrew/.linuxbrew/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     volumes:
-      - /root/.openclaw:/home/node/.openclaw
-      - /root/.openclaw/workspace:/home/node/.openclaw/workspace
-    entrypoint: ["node", "dist/index.js"]
+      - ${OPENCLAW_CONFIG_DIR}:/home/node/.openclaw
+      - ${OPENCLAW_WORKSPACE_DIR}:/home/node/.openclaw/workspace
+    ports:
+      - "127.0.0.1:${OPENCLAW_GATEWAY_PORT}:18789"
+    command:
+      [
+        "node",
+        "dist/index.js",
+        "gateway",
+        "--bind",
+        "${OPENCLAW_GATEWAY_BIND}",
+        "--port",
+        "${OPENCLAW_GATEWAY_PORT}",
+      ]
 COMPOSE_EOF
-
-echo "→ Pulling OpenClaw Docker image..."
-docker compose pull openclaw-gateway
-
-# Create config directory
-mkdir -p /root/.openclaw/workspace/memory
 
 # Create config.json
 echo "→ Creating OpenClaw configuration..."
@@ -85,7 +130,7 @@ cat > /root/.openclaw/config.json <<CONFIG_EOF
 {
   "gateway": {
     "mode": "production",
-    "bind": "0.0.0.0",
+    "bind": "lan",
     "port": 18789
   },
   "providers": {
@@ -112,9 +157,11 @@ cat > /root/.openclaw/config.json <<CONFIG_EOF
 }
 CONFIG_EOF
 
+# Fix ownership
+chown 1000:1000 /root/.openclaw/config.json
+
 # Create workspace files
 echo "→ Creating workspace structure..."
-
 cat > /root/.openclaw/workspace/IDENTITY.md <<'IDENTITY_EOF'
 # IDENTITY.md
 
@@ -210,13 +257,14 @@ Long-term memory and important context.
 MEMORY_EOF
 
 # Create today's memory file
+mkdir -p /root/.openclaw/workspace/memory
 TODAY=$(date +%Y-%m-%d)
 cat > "/root/.openclaw/workspace/memory/$TODAY.md" <<DAILY_EOF
 # $TODAY
 
 ## Setup
 
-OpenClaw agent deployed and configured.
+OpenClaw agent deployed via Docker (official method).
 
 Agent name: $AGENT_NAME
 Model: $MODEL
@@ -224,9 +272,15 @@ Model: $MODEL
 Ready to assist.
 DAILY_EOF
 
-# Start the gateway
+# Fix ownership
+chown -R 1000:1000 /root/.openclaw/workspace
+
+# Build and start
+echo "→ Building OpenClaw image..."
+cd /root/openclaw
+docker compose build
+
 echo "→ Starting OpenClaw gateway..."
-cd /opt/openclaw
 docker compose up -d openclaw-gateway
 
 # Wait for startup
@@ -244,17 +298,17 @@ fi
 
 echo ""
 echo "========================================"
-echo "✅ VPS Setup Complete!"
+echo "✅ Setup Complete!"
 echo "========================================"
 echo ""
-echo "OpenClaw is running on port 18789"
-echo "Telegram bot should be active"
+echo "OpenClaw repository: /root/openclaw"
+echo "Configuration: /root/.openclaw/config.json"
+echo "Workspace: /root/.openclaw/workspace"
 echo ""
-echo "Configuration:"
-echo "  Config: /root/.openclaw/config.json"
-echo "  Workspace: /root/.openclaw/workspace"
-echo "  Compose: /opt/openclaw/docker-compose.yml"
+echo "Gateway token (save this): $GATEWAY_TOKEN"
 echo ""
-echo "Check logs:"
-echo "  docker compose -f /opt/openclaw/docker-compose.yml logs -f"
+echo "Useful commands:"
+echo "  Check logs: cd /root/openclaw && docker compose logs -f openclaw-gateway"
+echo "  Restart: cd /root/openclaw && docker compose restart openclaw-gateway"
+echo "  Stop: cd /root/openclaw && docker compose down"
 echo ""

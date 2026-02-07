@@ -1,8 +1,10 @@
 # OpenClaw VPS Deployment
 
-**One-command deployment of OpenClaw to a VPS with Docker.**
+**One-command deployment of OpenClaw to a VPS with Docker or direct install.**
 
 Deploy a production-ready OpenClaw instance to any Ubuntu VPS in ~10 minutes.
+
+**Based on:** [Official OpenClaw Hetzner Guide](https://docs.openclaw.ai/install/hetzner)
 
 ---
 
@@ -75,9 +77,10 @@ cd openclaw-vps-deploy
 #### Installation Methods
 
 **Docker (default):**
-- Uses official OpenClaw Docker image
+- Clones OpenClaw repository and builds from source
+- Official method from OpenClaw docs
 - Isolated container environment
-- Easy updates via `docker compose pull`
+- Supports all skills and custom binaries
 - Recommended for production
 
 **Direct:**
@@ -115,9 +118,11 @@ The script will:
 ### Directory Structure on VPS
 
 ```
-/opt/openclaw/
+/root/openclaw/                 # OpenClaw repository (cloned from GitHub)
 ├── docker-compose.yml          # Container orchestration
-└── .env                        # Environment variables (optional)
+├── .env                        # Environment variables (secrets)
+├── Dockerfile                  # Image build instructions
+└── ...                         # Source code
 
 /root/.openclaw/
 ├── config.json                 # OpenClaw configuration
@@ -131,10 +136,10 @@ The script will:
         └── YYYY-MM-DD.md       # Daily logs
 ```
 
-### Docker Services
-
-- **openclaw-gateway**: Main service (runs 24/7)
-- **openclaw-cli**: CLI container (for admin commands)
+**Why this structure:**
+- `/root/openclaw/` - Source of truth for code (survives restarts)
+- `/root/.openclaw/` - Persistent config & workspace (mounted into container)
+- Container itself is ephemeral (safe to destroy)
 
 ---
 
@@ -159,7 +164,7 @@ nano /root/.openclaw/workspace/USER.md
 
 Restart to apply changes:
 ```bash
-cd /opt/openclaw
+cd /root/openclaw
 docker compose restart openclaw-gateway
 ```
 
@@ -168,7 +173,8 @@ docker compose restart openclaw-gateway
 **Docker:**
 ```bash
 ssh root@your-vps-ip
-docker compose -f /opt/openclaw/docker-compose.yml logs -f openclaw-gateway
+cd /root/openclaw
+docker compose logs -f openclaw-gateway
 ```
 
 **Direct:**
@@ -182,7 +188,7 @@ journalctl -u openclaw -f
 **Docker:**
 ```bash
 ssh root@your-vps-ip
-cd /opt/openclaw
+cd /root/openclaw
 docker compose restart openclaw-gateway
 ```
 
@@ -197,8 +203,9 @@ systemctl restart openclaw
 **Docker:**
 ```bash
 ssh root@your-vps-ip
-cd /opt/openclaw
-docker compose pull openclaw-gateway
+cd /root/openclaw
+git pull
+docker compose build
 docker compose up -d openclaw-gateway
 ```
 
@@ -257,7 +264,8 @@ See [OpenClaw channel docs](https://docs.openclaw.ai/channels).
 Docker:
 ```bash
 ssh root@your-vps-ip
-docker compose -f /opt/openclaw/docker-compose.yml ps
+cd /root/openclaw
+docker compose ps
 ```
 
 Direct:
@@ -270,7 +278,8 @@ systemctl status openclaw
 
 Docker:
 ```bash
-docker compose -f /opt/openclaw/docker-compose.yml logs openclaw-gateway
+cd /root/openclaw
+docker compose logs openclaw-gateway
 ```
 
 Direct:
@@ -282,7 +291,7 @@ journalctl -u openclaw -f
 
 Docker:
 ```bash
-cd /opt/openclaw
+cd /root/openclaw
 docker compose restart openclaw-gateway
 ```
 
