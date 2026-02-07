@@ -27,17 +27,7 @@ apt-get update -qq
 apt-get upgrade -y -qq
 apt-get install -y -qq curl git ufw
 
-# Install Node.js 22
-echo "→ Installing Node.js..."
-if ! command -v node &> /dev/null; then
-    curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
-    apt-get install -y -qq nodejs
-fi
-
-NODE_VERSION=$(node --version)
-echo "✓ Node.js installed: $NODE_VERSION"
-
-# Configure firewall
+# Configure firewall first
 echo "→ Configuring firewall..."
 ufw --force enable
 ufw allow 22/tcp    # SSH
@@ -45,12 +35,26 @@ ufw allow 80/tcp    # HTTP (for future webhooks)
 ufw allow 443/tcp   # HTTPS
 ufw reload
 
-# Install OpenClaw globally
-echo "→ Installing OpenClaw..."
-npm install -g openclaw
+# Install OpenClaw using official installer
+echo "→ Installing OpenClaw (this installs Node.js if needed)..."
+curl -fsSL https://openclaw.ai/install.sh | bash
 
-OPENCLAW_VERSION=$(openclaw --version 2>/dev/null || echo "unknown")
-echo "✓ OpenClaw installed: $OPENCLAW_VERSION"
+# Reload shell environment
+export PATH="$HOME/.openclaw/bin:$PATH"
+source ~/.bashrc 2>/dev/null || true
+
+# Verify installation
+if command -v openclaw &> /dev/null; then
+    OPENCLAW_VERSION=$(openclaw --version 2>/dev/null || echo "unknown")
+    echo "✓ OpenClaw installed: $OPENCLAW_VERSION"
+else
+    echo "⚠️  OpenClaw command not found in PATH, but installation may have succeeded"
+    echo "Checking /root/.openclaw/bin..."
+    if [ -f "/root/.openclaw/bin/openclaw" ]; then
+        export PATH="/root/.openclaw/bin:$PATH"
+        echo "✓ Found OpenClaw in /root/.openclaw/bin"
+    fi
+fi
 
 # Create config directory
 echo "→ Creating OpenClaw configuration..."
@@ -200,6 +204,9 @@ Model: $MODEL
 Ready to assist.
 DAILY_EOF
 
+# Find openclaw binary path
+OPENCLAW_BIN=$(which openclaw 2>/dev/null || echo "/root/.openclaw/bin/openclaw")
+
 # Create systemd service for auto-restart
 echo "→ Creating systemd service..."
 cat > /etc/systemd/system/openclaw.service <<SERVICE_EOF
@@ -210,8 +217,9 @@ After=network.target
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/root/.openclaw
-ExecStart=/usr/bin/openclaw gateway start
+WorkingDirectory=/root
+Environment="PATH=/root/.openclaw/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=$OPENCLAW_BIN gateway start
 Restart=always
 RestartSec=10
 StandardOutput=journal

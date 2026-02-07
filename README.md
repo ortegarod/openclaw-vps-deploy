@@ -81,7 +81,7 @@ cd openclaw-vps-deploy
 - Recommended for production
 
 **Direct:**
-- Installs OpenClaw globally via npm
+- Uses official OpenClaw installer (`install.sh`)
 - Simpler architecture (no Docker layer)
 - Managed by systemd service
 - Better for understanding how OpenClaw works
@@ -205,7 +205,8 @@ docker compose up -d openclaw-gateway
 **Direct:**
 ```bash
 ssh root@your-vps-ip
-npm update -g openclaw
+# Re-run the installer to get latest version
+curl -fsSL https://openclaw.ai/install.sh | bash
 systemctl restart openclaw
 ```
 
