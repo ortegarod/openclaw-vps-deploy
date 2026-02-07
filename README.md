@@ -83,17 +83,15 @@ git clone https://github.com/kali-claw/openclaw-vps-deploy.git
 cd openclaw-vps-deploy
 
 ./deploy.sh \
-  --host 203.0.113.45 \
-  --telegram-token "123456789:ABCdefGHIjklMNOpqrsTUVwxyz" \
-  --api-key "sk-ant-api03-..."
+  --host YOUR_VPS_IP \
+  --telegram-token "YOUR_TELEGRAM_TOKEN" \
+  --api-key "YOUR_CLAUDE_API_KEY"
 ```
 
-**Optional flags:**
-```bash
---name "my-agent"              # Agent name (default: openclaw-agent)
---model "claude-sonnet-4-5"    # Model (default: claude-sonnet-4-5)
---user root                     # SSH user (default: root)
-```
+Replace:
+- `YOUR_VPS_IP` with your VPS IP from step 1
+- `YOUR_TELEGRAM_TOKEN` with the token from step 2
+- `YOUR_CLAUDE_API_KEY` with the key from step 3
 
 ### 5. Done!
 
