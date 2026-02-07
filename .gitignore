@@ -1,0 +1,29 @@
+# Secrets
+*.env
+secrets/
+credentials/
+
+# SSH keys
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+test-output/
+.vagrant/
