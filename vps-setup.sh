@@ -1,9 +1,9 @@
 #!/bin/bash
 #
-# vps-setup.sh - Install OpenClaw on VPS (Official recommended method)
+# vps-setup.sh - Install OpenClaw on VPS (Official method)
 #
 # Based on: https://docs.openclaw.ai/install
-# Uses the official installer script
+# Uses official installer + onboarding wizard (non-interactive mode)
 #
 
 set -e
@@ -34,187 +34,62 @@ ufw --force enable
 ufw allow 22/tcp
 ufw allow 80/tcp
 ufw allow 443/tcp
+ufw allow 18789/tcp
 ufw reload
 
-# Install OpenClaw using official installer
-echo "→ Installing OpenClaw (official installer)..."
+# Install OpenClaw (official installer)
+echo "→ Installing OpenClaw..."
 curl -fsSL https://openclaw.ai/install.sh | bash
 
 # Reload PATH
-export PATH="$HOME/.openclaw/bin:$PATH"
+export PATH="/root/.openclaw/bin:$PATH"
 source ~/.bashrc 2>/dev/null || true
 
 # Verify installation
-if command -v openclaw &> /dev/null; then
-    OPENCLAW_VERSION=$(openclaw --version 2>/dev/null || echo "installed")
-    echo "✓ OpenClaw installed: $OPENCLAW_VERSION"
-else
-    # Fallback: try direct path
+if ! command -v openclaw &> /dev/null; then
     if [ -f "/root/.openclaw/bin/openclaw" ]; then
         export PATH="/root/.openclaw/bin:$PATH"
-        echo "✓ OpenClaw installed at /root/.openclaw/bin"
     else
         echo "❌ OpenClaw installation failed"
         exit 1
     fi
 fi
 
-# Create workspace directories
-echo "→ Creating workspace structure..."
-mkdir -p /root/.openclaw/workspace/memory
+echo "✓ OpenClaw installed"
 
-# Create config.json
-echo "→ Creating OpenClaw configuration..."
-cat > /root/.openclaw/config.json <<CONFIG_EOF
-{
-  "gateway": {
-    "mode": "production",
-    "bind": "0.0.0.0",
-    "port": 18789
-  },
-  "providers": {
-    "anthropic": {
-      "apiKey": "$API_KEY"
-    }
-  },
-  "channels": {
-    "telegram": {
-      "enabled": true,
-      "token": "$TELEGRAM_TOKEN"
-    }
-  },
-  "agents": {
-    "defaults": {
-      "model": {
-        "primary": "$MODEL"
-      },
-      "sandbox": {
-        "mode": "off"
-      }
-    }
-  }
-}
-CONFIG_EOF
+# Run onboarding wizard in non-interactive mode
+echo "→ Running OpenClaw onboarding..."
+openclaw onboard --non-interactive \
+  --mode local \
+  --auth-choice apiKey \
+  --anthropic-api-key "$API_KEY" \
+  --gateway-port 18789 \
+  --gateway-bind lan \
+  --install-daemon \
+  --daemon-runtime node \
+  --skip-skills
 
-# Create workspace files
-cat > /root/.openclaw/workspace/IDENTITY.md <<'IDENTITY_EOF'
-# IDENTITY.md
+echo "✓ Onboarding complete"
 
-I am an AI agent powered by OpenClaw and Claude.
+# Add Telegram channel configuration
+echo "→ Configuring Telegram channel..."
+openclaw channels add --channel telegram --token "$TELEGRAM_TOKEN"
 
-- **Name:** [Your agent name]
-- **Purpose:** [What you're here to do]
-- **Capabilities:** File management, web research, task automation, analysis
+echo "✓ Telegram configured"
 
----
-
-*Edit this file to customize your agent's identity*
-IDENTITY_EOF
-
-cat > /root/.openclaw/workspace/SOUL.md <<'SOUL_EOF'
-# SOUL.md
-
-## How I Work
-
-- **Helpful and resourceful** — I find answers and solve problems
-- **Clear communicator** — I explain things simply
-- **Proactive** — I suggest improvements and automations
-- **Trustworthy** — I handle information with care
-
----
-
-*Customize this to match your preferred tone and style*
-SOUL_EOF
-
-cat > /root/.openclaw/workspace/USER.md <<'USER_EOF'
-# USER.md
-
-Information about my user(s).
-
-- **Primary user:** [Name]
-- **Timezone:** [Timezone]
-- **Preferences:** [Communication style, working hours, etc.]
-
----
-
-*Update this with information to help your agent serve you better*
-USER_EOF
-
-cat > /root/.openclaw/workspace/TOOLS.md <<'TOOLS_EOF'
-# TOOLS.md
-
-Installed skills and tools will be documented here.
-
----
-
-*Track your agent's capabilities here*
-TOOLS_EOF
-
-cat > /root/.openclaw/workspace/MEMORY.md <<'MEMORY_EOF'
-# MEMORY.md
-
-Long-term memory and important context.
-
----
-
-*Your agent's persistent memory lives here*
-MEMORY_EOF
-
-# Create today's memory file
-TODAY=$(date +%Y-%m-%d)
-cat > "/root/.openclaw/workspace/memory/$TODAY.md" <<DAILY_EOF
-# $TODAY
-
-## Setup
-
-OpenClaw agent deployed (official installer method).
-
-Agent name: $AGENT_NAME
-Model: $MODEL
-
-Ready to assist.
-DAILY_EOF
-
-# Find openclaw binary
-OPENCLAW_BIN=$(which openclaw 2>/dev/null || echo "/root/.openclaw/bin/openclaw")
-
-# Create systemd service
-echo "→ Creating systemd service..."
-cat > /etc/systemd/system/openclaw.service <<SERVICE_EOF
-[Unit]
-Description=OpenClaw Gateway
-After=network.target
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/root
-Environment="PATH=/root/.openclaw/bin:/usr/local/bin:/usr/bin:/bin"
-ExecStart=$OPENCLAW_BIN gateway start
-Restart=always
-RestartSec=10
-StandardOutput=journal
-StandardError=journal
-
-[Install]
-WantedBy=multi-user.target
-SERVICE_EOF
-
-# Enable and start
-systemctl daemon-reload
-systemctl enable openclaw
-systemctl start openclaw
+# Start gateway
+echo "→ Starting OpenClaw gateway..."
+openclaw gateway start &
 
 # Wait for startup
 echo "→ Waiting for gateway to start..."
 sleep 10
 
 # Check status
-if systemctl is-active --quiet openclaw; then
-  echo "✓ Gateway is running"
+if pgrep -f "openclaw gateway" > /dev/null; then
+    echo "✓ Gateway is running"
 else
-  echo "⚠️  Gateway may not be running properly"
-  systemctl status openclaw --no-pager
+    echo "⚠️  Gateway may not be running properly"
 fi
 
 echo ""
@@ -222,12 +97,11 @@ echo "========================================"
 echo "✅ Setup Complete!"
 echo "========================================"
 echo ""
-echo "Configuration: /root/.openclaw/config.json"
+echo "Configuration: /root/.openclaw/openclaw.json"
 echo "Workspace: /root/.openclaw/workspace"
 echo ""
 echo "Useful commands:"
-echo "  Check logs: journalctl -u openclaw -f"
-echo "  Restart: systemctl restart openclaw"
-echo "  Stop: systemctl stop openclaw"
-echo "  Status: systemctl status openclaw"
+echo "  Check status: openclaw gateway status"
+echo "  View logs: openclaw logs"
+echo "  Stop: openclaw gateway stop"
 echo ""
