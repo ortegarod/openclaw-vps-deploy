@@ -6,7 +6,7 @@ Common deployment scenarios for OpenClaw on VPS.
 
 ## Basic Deployment
 
-**Minimal setup with defaults:**
+**Minimal setup with Docker (default):**
 
 ```bash
 ./deploy.sh \
@@ -15,10 +15,36 @@ Common deployment scenarios for OpenClaw on VPS.
   --api-key "sk-ant-api03-..."
 ```
 
-This creates:
+**Direct installation (no Docker):**
+
+```bash
+./deploy.sh \
+  --host 203.0.113.45 \
+  --method direct \
+  --telegram-token "123456:ABC..." \
+  --api-key "sk-ant-..."
+```
+
+Both create:
 - Agent named "openclaw-agent"
 - Using claude-sonnet-4-5
 - SSH as root
+
+---
+
+## Choosing Installation Method
+
+### Use Docker when:
+- You want the official, tested OpenClaw image
+- You're running in production
+- You want easy updates (`docker compose pull`)
+- You need container isolation
+
+### Use Direct when:
+- You want simpler architecture
+- You're learning how OpenClaw works
+- You don't want Docker overhead
+- You prefer systemd service management
 
 ---
 

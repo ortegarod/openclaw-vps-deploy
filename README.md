@@ -8,11 +8,11 @@ Deploy a production-ready OpenClaw instance to any Ubuntu VPS in ~10 minutes.
 
 ## Features
 
-✅ Automated server setup (Docker, firewall, security hardening)  
-✅ OpenClaw installed via Docker Compose  
+✅ **Two installation methods**: Docker or direct install  
+✅ Automated server setup (firewall, security hardening)  
 ✅ Telegram bot configuration  
 ✅ Workspace structure with sensible defaults  
-✅ Auto-restart on crashes  
+✅ Auto-restart on crashes (systemd or Docker restart policy)  
 ✅ SSH access for maintenance  
 
 ---
@@ -68,7 +68,31 @@ cd openclaw-vps-deploy
 ```bash
 --name "my-agent"              # Agent name (default: "openclaw-agent")
 --model "claude-sonnet-4-5"    # Model (default: claude-sonnet-4-5)
+--method docker                # docker (default) or direct
 --user root                     # SSH user (default: root)
+```
+
+#### Installation Methods
+
+**Docker (default):**
+- Uses official OpenClaw Docker image
+- Isolated container environment
+- Easy updates via `docker compose pull`
+- Recommended for production
+
+**Direct:**
+- Installs OpenClaw globally via npm
+- Simpler architecture (no Docker layer)
+- Managed by systemd service
+- Better for understanding how OpenClaw works
+
+Choose based on your preference:
+```bash
+# Docker (default)
+./deploy.sh --host <ip> --telegram-token <token> --api-key <key>
+
+# Direct install
+./deploy.sh --host <ip> --telegram-token <token> --api-key <key> --method direct
 ```
 
 ### 4. Done!
@@ -141,26 +165,48 @@ docker compose restart openclaw-gateway
 
 ### Check Logs
 
+**Docker:**
 ```bash
 ssh root@your-vps-ip
 docker compose -f /opt/openclaw/docker-compose.yml logs -f openclaw-gateway
 ```
 
+**Direct:**
+```bash
+ssh root@your-vps-ip
+journalctl -u openclaw -f
+```
+
 ### Restart Gateway
 
+**Docker:**
 ```bash
 ssh root@your-vps-ip
 cd /opt/openclaw
 docker compose restart openclaw-gateway
 ```
 
+**Direct:**
+```bash
+ssh root@your-vps-ip
+systemctl restart openclaw
+```
+
 ### Update OpenClaw
 
+**Docker:**
 ```bash
 ssh root@your-vps-ip
 cd /opt/openclaw
 docker compose pull openclaw-gateway
 docker compose up -d openclaw-gateway
+```
+
+**Direct:**
+```bash
+ssh root@your-vps-ip
+npm update -g openclaw
+systemctl restart openclaw
 ```
 
 ---
@@ -206,20 +252,42 @@ See [OpenClaw channel docs](https://docs.openclaw.ai/channels).
 ### Bot not responding
 
 **Check if gateway is running:**
+
+Docker:
 ```bash
 ssh root@your-vps-ip
 docker compose -f /opt/openclaw/docker-compose.yml ps
 ```
 
+Direct:
+```bash
+ssh root@your-vps-ip
+systemctl status openclaw
+```
+
 **View logs:**
+
+Docker:
 ```bash
 docker compose -f /opt/openclaw/docker-compose.yml logs openclaw-gateway
 ```
 
+Direct:
+```bash
+journalctl -u openclaw -f
+```
+
 **Restart:**
+
+Docker:
 ```bash
 cd /opt/openclaw
 docker compose restart openclaw-gateway
+```
+
+Direct:
+```bash
+systemctl restart openclaw
 ```
 
 ### SSH connection refused
