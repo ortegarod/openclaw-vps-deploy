@@ -1,20 +1,20 @@
 # OpenClaw VPS Deployment
 
-**One-command deployment of OpenClaw to a VPS with Docker or direct install.**
+**One-command deployment of OpenClaw to any VPS.**
 
 Deploy a production-ready OpenClaw instance to any Ubuntu VPS in ~10 minutes.
 
-**Based on:** [Official OpenClaw Hetzner Guide](https://docs.openclaw.ai/install/hetzner)
+**Uses:** [Official OpenClaw installer](https://docs.openclaw.ai/install) (recommended method)
 
 ---
 
 ## Features
 
-✅ **Two installation methods**: Docker or direct install  
-✅ Automated server setup (firewall, security hardening)  
+✅ Automated VPS setup (firewall, security)  
+✅ Official OpenClaw installer  
 ✅ Telegram bot configuration  
-✅ Workspace structure with sensible defaults  
-✅ Auto-restart on crashes (systemd or Docker restart policy)  
+✅ Workspace structure with defaults  
+✅ Systemd service (auto-restart on crashes)  
 ✅ SSH access for maintenance  
 
 ---
@@ -68,46 +68,20 @@ cd openclaw-vps-deploy
 
 **Optional flags:**
 ```bash
---name "my-agent"              # Agent name (default: "openclaw-agent")
+--name "my-agent"              # Agent name (default: openclaw-agent)
 --model "claude-sonnet-4-5"    # Model (default: claude-sonnet-4-5)
---method docker                # docker (default) or direct
 --user root                     # SSH user (default: root)
-```
-
-#### Installation Methods
-
-**Docker (default):**
-- Clones OpenClaw repository and builds from source
-- Official method from OpenClaw docs
-- Isolated container environment
-- Supports all skills and custom binaries
-- Recommended for production
-
-**Direct:**
-- Uses official OpenClaw installer (`install.sh`)
-- Simpler architecture (no Docker layer)
-- Managed by systemd service
-- Better for understanding how OpenClaw works
-
-Choose based on your preference:
-```bash
-# Docker (default)
-./deploy.sh --host <ip> --telegram-token <token> --api-key <key>
-
-# Direct install
-./deploy.sh --host <ip> --telegram-token <token> --api-key <key> --method direct
 ```
 
 ### 4. Done!
 
 The script will:
 1. SSH into your VPS
-2. Install Docker and dependencies
+2. Run the official OpenClaw installer
 3. Configure firewall
-4. Deploy OpenClaw via Docker Compose
-5. Set up Telegram bot connection
-6. Create workspace structure
-7. Start the gateway
+4. Set up Telegram bot connection
+5. Create workspace structure
+6. Start the gateway as systemd service
 
 **Your bot is now live on Telegram!**
 
@@ -118,28 +92,24 @@ The script will:
 ### Directory Structure on VPS
 
 ```
-/root/openclaw/                 # OpenClaw repository (cloned from GitHub)
-├── docker-compose.yml          # Container orchestration
-├── .env                        # Environment variables (secrets)
-├── Dockerfile                  # Image build instructions
-└── ...                         # Source code
-
 /root/.openclaw/
-├── config.json                 # OpenClaw configuration
+├── bin/openclaw            # OpenClaw binary
+├── config.json             # Configuration
 └── workspace/
-    ├── IDENTITY.md             # Agent identity
-    ├── SOUL.md                 # Personality/behavior
-    ├── USER.md                 # User info (customize this)
-    ├── TOOLS.md                # Tools documentation
-    ├── MEMORY.md               # Long-term memory
+    ├── IDENTITY.md         # Agent identity
+    ├── SOUL.md             # Personality/behavior
+    ├── USER.md             # User info (customize this)
+    ├── TOOLS.md            # Tools documentation
+    ├── MEMORY.md           # Long-term memory
     └── memory/
-        └── YYYY-MM-DD.md       # Daily logs
+        └── YYYY-MM-DD.md   # Daily logs
 ```
 
-**Why this structure:**
-- `/root/openclaw/` - Source of truth for code (survives restarts)
-- `/root/.openclaw/` - Persistent config & workspace (mounted into container)
-- Container itself is ephemeral (safe to destroy)
+### Service
+
+- **openclaw.service** - Systemd service (auto-restart)
+- Runs as root
+- Logs to journald
 
 ---
 
@@ -164,20 +134,11 @@ nano /root/.openclaw/workspace/USER.md
 
 Restart to apply changes:
 ```bash
-cd /root/openclaw
-docker compose restart openclaw-gateway
+systemctl restart openclaw
 ```
 
 ### Check Logs
 
-**Docker:**
-```bash
-ssh root@your-vps-ip
-cd /root/openclaw
-docker compose logs -f openclaw-gateway
-```
-
-**Direct:**
 ```bash
 ssh root@your-vps-ip
 journalctl -u openclaw -f
@@ -185,14 +146,6 @@ journalctl -u openclaw -f
 
 ### Restart Gateway
 
-**Docker:**
-```bash
-ssh root@your-vps-ip
-cd /root/openclaw
-docker compose restart openclaw-gateway
-```
-
-**Direct:**
 ```bash
 ssh root@your-vps-ip
 systemctl restart openclaw
@@ -200,19 +153,9 @@ systemctl restart openclaw
 
 ### Update OpenClaw
 
-**Docker:**
 ```bash
 ssh root@your-vps-ip
-cd /root/openclaw
-git pull
-docker compose build
-docker compose up -d openclaw-gateway
-```
-
-**Direct:**
-```bash
-ssh root@your-vps-ip
-# Re-run the installer to get latest version
+# Re-run the installer
 curl -fsSL https://openclaw.ai/install.sh | bash
 systemctl restart openclaw
 ```
@@ -220,16 +163,6 @@ systemctl restart openclaw
 ---
 
 ## Configuration
-
-### Environment Variables
-
-You can set these in `/opt/openclaw/.env` or pass via docker-compose:
-
-```bash
-OPENCLAW_GATEWAY_PORT=18789
-OPENCLAW_LOG_LEVEL=info
-NODE_ENV=production
-```
 
 ### Custom Models
 
@@ -247,6 +180,8 @@ Edit `/root/.openclaw/config.json`:
 }
 ```
 
+Then restart: `systemctl restart openclaw`
+
 ### Adding Channels
 
 To add more channels (Discord, WhatsApp, etc.), edit `config.json` and restart.
@@ -260,42 +195,17 @@ See [OpenClaw channel docs](https://docs.openclaw.ai/channels).
 ### Bot not responding
 
 **Check if gateway is running:**
-
-Docker:
-```bash
-ssh root@your-vps-ip
-cd /root/openclaw
-docker compose ps
-```
-
-Direct:
 ```bash
 ssh root@your-vps-ip
 systemctl status openclaw
 ```
 
 **View logs:**
-
-Docker:
-```bash
-cd /root/openclaw
-docker compose logs openclaw-gateway
-```
-
-Direct:
 ```bash
 journalctl -u openclaw -f
 ```
 
 **Restart:**
-
-Docker:
-```bash
-cd /root/openclaw
-docker compose restart openclaw-gateway
-```
-
-Direct:
 ```bash
 systemctl restart openclaw
 ```
@@ -314,51 +224,17 @@ systemctl restart openclaw
 
 ---
 
-## Security Hardening
+## Security
 
 The deployment script includes basic security:
 - UFW firewall (SSH, HTTP, HTTPS only)
-- Docker container isolation
-- Non-root user for containers
+- Systemd service isolation
 
 **Additional recommendations:**
 - Change SSH port from 22
 - Disable password auth (key-only)
 - Set up fail2ban
 - Enable automatic security updates
-- Use CloudFlare for DDoS protection
-
----
-
-## Architecture
-
-```
-┌─────────────┐
-│  Telegram   │
-│    User     │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────────────────────────┐
-│         Telegram API            │
-│   (webhook or long-polling)     │
-└──────────────┬──────────────────┘
-               │
-               ▼
-┌─────────────────────────────────┐
-│           VPS                   │
-│  ┌───────────────────────────┐  │
-│  │  OpenClaw Gateway         │  │
-│  │  (Docker container)       │  │
-│  └───────────┬───────────────┘  │
-│              │                   │
-│              ▼                   │
-│  ┌───────────────────────────┐  │
-│  │  Claude API / OpenRouter  │  │
-│  │  (via HTTPS)              │  │
-│  └───────────────────────────┘  │
-└─────────────────────────────────┘
-```
 
 ---
 

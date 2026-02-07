@@ -6,7 +6,7 @@ Common deployment scenarios for OpenClaw on VPS.
 
 ## Basic Deployment
 
-**Minimal setup with Docker (default):**
+**Minimal setup with defaults:**
 
 ```bash
 ./deploy.sh \
@@ -15,36 +15,10 @@ Common deployment scenarios for OpenClaw on VPS.
   --api-key "sk-ant-api03-..."
 ```
 
-**Direct installation (no Docker):**
-
-```bash
-./deploy.sh \
-  --host 203.0.113.45 \
-  --method direct \
-  --telegram-token "123456:ABC..." \
-  --api-key "sk-ant-..."
-```
-
-Both create:
+This creates:
 - Agent named "openclaw-agent"
 - Using claude-sonnet-4-5
 - SSH as root
-
----
-
-## Choosing Installation Method
-
-### Use Docker when:
-- You want the official, tested OpenClaw image
-- You're running in production
-- You want easy updates (`docker compose pull`)
-- You need container isolation
-
-### Use Direct when:
-- You want simpler architecture
-- You're learning how OpenClaw works
-- You don't want Docker overhead
-- You prefer systemd service management
 
 ---
 
@@ -163,22 +137,23 @@ nano /root/.openclaw/workspace/SOUL.md
 nano /root/.openclaw/workspace/USER.md
 
 # Restart to apply
-cd /opt/openclaw
-docker compose restart openclaw-gateway
+systemctl restart openclaw
 ```
 
 ---
 
-## Updating OpenClaw Version
+## Updating OpenClaw
 
-**Pull latest Docker image:**
+**Get latest version:**
 
 ```bash
 ssh root@203.0.113.45
 
-cd /opt/openclaw
-docker compose pull openclaw-gateway
-docker compose up -d openclaw-gateway
+# Re-run installer
+curl -fsSL https://openclaw.ai/install.sh | bash
+
+# Restart gateway
+systemctl restart openclaw
 ```
 
 ---
@@ -199,33 +174,7 @@ rsync -avz root@203.0.113.45:/root/.openclaw/ ./backup-$(date +%Y%m%d)/
 rsync -avz ./backup-20260207/ root@203.0.113.46:/root/.openclaw/
 
 # Restart gateway
-ssh root@203.0.113.46 'cd /opt/openclaw && docker compose restart openclaw-gateway'
-```
-
----
-
-## Environment-Specific Deployments
-
-### Development
-
-```bash
-./deploy.sh \
-  --host dev.example.com \
-  --name "dev-agent" \
-  --model "anthropic/claude-haiku-4-5" \  # Cheaper for testing
-  --telegram-token "123:DEV..." \
-  --api-key "sk-ant-..."
-```
-
-### Production
-
-```bash
-./deploy.sh \
-  --host prod.example.com \
-  --name "production-agent" \
-  --model "anthropic/claude-opus-4-6" \    # Best model
-  --telegram-token "456:PROD..." \
-  --api-key "sk-ant-..."
+ssh root@203.0.113.46 'systemctl restart openclaw'
 ```
 
 ---
@@ -235,19 +184,19 @@ ssh root@203.0.113.46 'cd /opt/openclaw && docker compose restart openclaw-gatew
 ### Check if gateway is running
 
 ```bash
-ssh root@203.0.113.45 'cd /root/openclaw && docker compose ps'
+ssh root@203.0.113.45 'systemctl status openclaw'
 ```
 
 ### View logs
 
 ```bash
-ssh root@203.0.113.45 'cd /root/openclaw && docker compose logs -f openclaw-gateway'
+ssh root@203.0.113.45 'journalctl -u openclaw -f'
 ```
 
 ### Restart gateway
 
 ```bash
-ssh root@203.0.113.45 'cd /root/openclaw && docker compose restart openclaw-gateway'
+ssh root@203.0.113.45 'systemctl restart openclaw'
 ```
 
 ### Test Telegram connection
@@ -255,14 +204,14 @@ ssh root@203.0.113.45 'cd /root/openclaw && docker compose restart openclaw-gate
 Send a message to your bot via Telegram and check logs:
 
 ```bash
-ssh root@203.0.113.45 'docker compose -f /opt/openclaw/docker-compose.yml logs --tail=50 openclaw-gateway'
+ssh root@203.0.113.45 'journalctl -u openclaw --tail=50'
 ```
 
 ---
 
 ## Advanced: Custom Config
 
-If you need more control, deploy with defaults then edit config manually:
+Deploy with defaults then edit config manually:
 
 ```bash
 # Deploy
@@ -275,8 +224,7 @@ ssh root@203.0.113.45
 nano /root/.openclaw/config.json
 
 # Restart
-cd /opt/openclaw
-docker compose restart openclaw-gateway
+systemctl restart openclaw
 ```
 
 Example custom config sections:

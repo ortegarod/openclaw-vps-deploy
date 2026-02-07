@@ -1,15 +1,9 @@
 #!/bin/bash
 #
-# deploy.sh - Deploy OpenClaw to a VPS via Docker
+# deploy.sh - Deploy OpenClaw to a VPS
 #
 # Usage:
 #   ./deploy.sh --host <ip> --telegram-token <token> --api-key <key> [options]
-#
-# Example:
-#   ./deploy.sh \
-#     --host 203.0.113.45 \
-#     --telegram-token "123456:ABCdef..." \
-#     --api-key "sk-ant-api03-..."
 #
 
 set -e
@@ -18,7 +12,6 @@ set -e
 SSH_USER="root"
 AGENT_NAME="openclaw-agent"
 MODEL="anthropic/claude-sonnet-4-5"
-INSTALL_METHOD="docker"
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -47,15 +40,6 @@ while [[ $# -gt 0 ]]; do
       SSH_USER="$2"
       shift 2
       ;;
-    --method)
-      INSTALL_METHOD="$2"
-      if [ "$INSTALL_METHOD" != "docker" ] && [ "$INSTALL_METHOD" != "direct" ]; then
-        echo "❌ Invalid method: $INSTALL_METHOD"
-        echo "Must be 'docker' or 'direct'"
-        exit 1
-      fi
-      shift 2
-      ;;
     -h|--help)
       echo "Usage: $0 --host <ip> --telegram-token <token> --api-key <key> [options]"
       echo ""
@@ -67,7 +51,6 @@ while [[ $# -gt 0 ]]; do
       echo "Optional:"
       echo "  --name <name>             Agent name (default: openclaw-agent)"
       echo "  --model <model>           Model to use (default: anthropic/claude-sonnet-4-5)"
-      echo "  --method <docker|direct>  Installation method (default: docker)"
       echo "  --user <user>             SSH user (default: root)"
       echo ""
       exit 0
@@ -95,7 +78,6 @@ echo "=========================================="
 echo "Host: $VPS_HOST"
 echo "Agent: $AGENT_NAME"
 echo "Model: $MODEL"
-echo "Method: $INSTALL_METHOD"
 echo "SSH User: $SSH_USER"
 echo "=========================================="
 echo ""
@@ -115,13 +97,9 @@ fi
 echo "✓ SSH connection successful"
 echo ""
 
-# Copy appropriate setup script to VPS
+# Copy setup script to VPS
 echo "→ Copying setup script to VPS..."
-if [ "$INSTALL_METHOD" = "docker" ]; then
-  scp -q "$(dirname "$0")/vps-setup-docker.sh" "$SSH_USER@$VPS_HOST:/tmp/vps-setup.sh"
-else
-  scp -q "$(dirname "$0")/vps-setup-direct.sh" "$SSH_USER@$VPS_HOST:/tmp/vps-setup.sh"
-fi
+scp -q "$(dirname "$0")/vps-setup.sh" "$SSH_USER@$VPS_HOST:/tmp/"
 
 # Run setup on VPS
 echo "→ Running deployment on VPS (this takes 5-10 minutes)..."
@@ -145,7 +123,7 @@ echo "  2. Customize agent: ssh $SSH_USER@$VPS_HOST"
 echo "  3. Edit files in: /root/.openclaw/workspace/"
 echo ""
 echo "Useful commands:"
-echo "  Check logs: ssh $SSH_USER@$VPS_HOST 'docker compose -f /opt/openclaw/docker-compose.yml logs -f'"
-echo "  Restart: ssh $SSH_USER@$VPS_HOST 'cd /opt/openclaw && docker compose restart openclaw-gateway'"
+echo "  Check logs: ssh $SSH_USER@$VPS_HOST 'journalctl -u openclaw -f'"
+echo "  Restart: ssh $SSH_USER@$VPS_HOST 'systemctl restart openclaw'"
 echo ""
 echo "🎉 Your agent is live!"
