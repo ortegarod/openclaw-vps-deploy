@@ -73,24 +73,35 @@ echo "✓ Onboarding complete"
 
 # Add Telegram channel configuration
 echo "→ Configuring Telegram channel..."
-openclaw channels add --channel telegram --token "$TELEGRAM_TOKEN"
+openclaw gateway config.patch --raw '{
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "botToken": "'"$TELEGRAM_TOKEN"'",
+      "dmPolicy": "pairing"
+    }
+  }
+}' --note "Add Telegram channel"
 
 echo "✓ Telegram configured"
 
-# Start gateway
-echo "→ Starting OpenClaw gateway..."
-openclaw gateway start &
-
-# Wait for startup
+# Gateway should auto-start via daemon (installed with --install-daemon)
 echo "→ Waiting for gateway to start..."
 sleep 10
 
 # Check status
-if pgrep -f "openclaw gateway" > /dev/null; then
+echo "→ Checking gateway status..."
+if openclaw gateway status > /dev/null 2>&1; then
     echo "✓ Gateway is running"
 else
-    echo "⚠️  Gateway may not be running properly"
+    echo "⚠️  Gateway may not be running, starting manually..."
+    openclaw gateway start
+    sleep 5
 fi
+
+# Run doctor check
+echo "→ Running diagnostics..."
+openclaw doctor || true
 
 echo ""
 echo "========================================"
@@ -101,7 +112,8 @@ echo "Configuration: /root/.openclaw/openclaw.json"
 echo "Workspace: /root/.openclaw/workspace"
 echo ""
 echo "Useful commands:"
-echo "  Check status: openclaw gateway status"
-echo "  View logs: openclaw logs"
-echo "  Stop: openclaw gateway stop"
+echo "  Check status: openclaw status"
+echo "  View logs: openclaw logs --follow"
+echo "  Restart: openclaw gateway restart"
+echo "  Diagnostics: openclaw doctor"
 echo ""
