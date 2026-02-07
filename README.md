@@ -13,7 +13,7 @@ Deploy a production-ready OpenClaw instance in ~10 minutes using the official Op
 You'll need these before starting:
 
 1. **VPS** - Ubuntu 24.04 server from any provider
-2. **SSH key** - For secure access to your VPS
+2. **SSH access** - SSH key (recommended) or password
 3. **Telegram bot token** - From @BotFather
 4. **Claude API key** - From Anthropic Console
 
@@ -45,11 +45,7 @@ Message [@BotFather](https://t.me/botfather) on Telegram:
 
 Save the token (format: `123456789:ABCdefGHIjklMNOpqrsTUVwxyz`)
 
-### 3. Get Claude Authentication
-
-**Choose one option:**
-
-#### Option A: API Key (Pay-as-you-go)
+### 3. Get a Claude API Key
 
 Go to [Anthropic Console](https://console.anthropic.com/):
 
@@ -58,19 +54,9 @@ Go to [Anthropic Console](https://console.anthropic.com/):
 3. Click **Create Key**
 4. Save the key (format: `sk-ant-api03-...`)
 
-#### Option B: Setup Token (Claude Subscription)
-
-If you have a Claude Pro or Claude Max subscription:
-
-1. Install Claude CLI on your local machine
-2. Run `claude setup-token`
-3. Copy the generated token
-
-**Note:** This uses your existing subscription instead of API billing
+**Note:** The script uses API key authentication (pay-as-you-go billing)
 
 ### 4. Run the Deploy Script
-
-**With API Key:**
 
 ```bash
 git clone https://github.com/kali-claw/openclaw-vps-deploy.git
@@ -82,20 +68,12 @@ cd openclaw-vps-deploy
   --api-key "YOUR_CLAUDE_API_KEY"
 ```
 
-**With Setup Token (Claude subscription):**
-
-```bash
-./deploy.sh \
-  --host YOUR_VPS_IP \
-  --telegram-token "YOUR_TELEGRAM_TOKEN" \
-  --setup-token "YOUR_SETUP_TOKEN"
-```
-
 Replace:
 - `YOUR_VPS_IP` with your VPS IP from step 1
 - `YOUR_TELEGRAM_TOKEN` with the token from step 2
-- `YOUR_CLAUDE_API_KEY` with the API key from step 3A **OR**
-- `YOUR_SETUP_TOKEN` with the setup-token from step 3B
+- `YOUR_CLAUDE_API_KEY` with the API key from step 3
+
+**Note:** The script will prompt for SSH password if you don't have key-based auth set up
 
 ### 5. Done!
 

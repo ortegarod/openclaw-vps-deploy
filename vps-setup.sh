@@ -10,9 +10,8 @@ set -e
 
 AGENT_NAME="$1"
 TELEGRAM_TOKEN="$2"
-AUTH_CHOICE="$3"
-AUTH_CREDENTIAL="$4"
-MODEL="$5"
+API_KEY="$3"
+MODEL="$4"
 
 echo "========================================"
 echo "OpenClaw VPS Setup"
@@ -60,31 +59,15 @@ echo "✓ OpenClaw installed"
 
 # Run onboarding wizard in non-interactive mode
 echo "→ Running OpenClaw onboarding..."
-if [ "$AUTH_CHOICE" = "apiKey" ]; then
-  openclaw onboard --non-interactive \
-    --mode local \
-    --auth-choice apiKey \
-    --anthropic-api-key "$AUTH_CREDENTIAL" \
-    --gateway-port 18789 \
-    --gateway-bind lan \
-    --install-daemon \
-    --daemon-runtime node \
-    --skip-skills
-elif [ "$AUTH_CHOICE" = "setupToken" ]; then
-  openclaw onboard --non-interactive \
-    --mode local \
-    --auth-choice setup-token \
-    --token "$AUTH_CREDENTIAL" \
-    --token-provider anthropic \
-    --gateway-port 18789 \
-    --gateway-bind lan \
-    --install-daemon \
-    --daemon-runtime node \
-    --skip-skills
-else
-  echo "❌ Invalid auth choice: $AUTH_CHOICE"
-  exit 1
-fi
+openclaw onboard --non-interactive \
+  --mode local \
+  --auth-choice apiKey \
+  --anthropic-api-key "$API_KEY" \
+  --gateway-port 18789 \
+  --gateway-bind lan \
+  --install-daemon \
+  --daemon-runtime node \
+  --skip-skills
 
 echo "✓ Onboarding complete"
 

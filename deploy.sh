@@ -12,8 +12,6 @@ set -e
 SSH_USER="root"
 AGENT_NAME="openclaw-agent"
 MODEL="anthropic/claude-sonnet-4-5"
-AUTH_CHOICE=""
-AUTH_CREDENTIAL=""
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -27,13 +25,7 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     --api-key)
-      AUTH_CHOICE="apiKey"
-      AUTH_CREDENTIAL="$2"
-      shift 2
-      ;;
-    --setup-token)
-      AUTH_CHOICE="setupToken"
-      AUTH_CREDENTIAL="$2"
+      API_KEY="$2"
       shift 2
       ;;
     --name)
@@ -49,15 +41,12 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     -h|--help)
-      echo "Usage: $0 --host <ip> --telegram-token <token> (--api-key <key> | --setup-token <token>) [options]"
+      echo "Usage: $0 --host <ip> --telegram-token <token> --api-key <key> [options]"
       echo ""
       echo "Required:"
       echo "  --host <ip>               VPS IP address"
       echo "  --telegram-token <token>  Telegram bot token from @BotFather"
-      echo ""
-      echo "Auth (choose one):"
       echo "  --api-key <key>           Anthropic API key (sk-ant-...)"
-      echo "  --setup-token <token>     Claude subscription setup-token (from 'claude setup-token')"
       echo ""
       echo "Optional:"
       echo "  --name <name>             Agent name (default: openclaw-agent)"
@@ -75,10 +64,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Validate required args
-if [ -z "$VPS_HOST" ] || [ -z "$TELEGRAM_TOKEN" ] || [ -z "$AUTH_CREDENTIAL" ]; then
+if [ -z "$VPS_HOST" ] || [ -z "$TELEGRAM_TOKEN" ] || [ -z "$API_KEY" ]; then
   echo "❌ Error: Missing required arguments"
   echo ""
-  echo "Usage: $0 --host <ip> --telegram-token <token> (--api-key <key> | --setup-token <token>)"
+  echo "Usage: $0 --host <ip> --telegram-token <token> --api-key <key>"
   echo "Run with -h or --help for full usage"
   exit 1
 fi
@@ -95,13 +84,13 @@ echo ""
 
 # Test SSH connection
 echo "→ Testing SSH connection..."
-if ! ssh -o ConnectTimeout=10 -o BatchMode=yes "$SSH_USER@$VPS_HOST" "echo 'SSH OK'" 2>/dev/null; then
+if ! ssh -o ConnectTimeout=10 "$SSH_USER@$VPS_HOST" "echo 'SSH OK'"; then
   echo "❌ Cannot connect to $SSH_USER@$VPS_HOST"
   echo ""
   echo "Please ensure:"
   echo "  1. VPS is running"
   echo "  2. IP address is correct"
-  echo "  3. SSH key is added: ssh-copy-id $SSH_USER@$VPS_HOST"
+  echo "  3. SSH access is configured (key or password)"
   exit 1
 fi
 
@@ -116,7 +105,7 @@ scp -q "$(dirname "$0")/vps-setup.sh" "$SSH_USER@$VPS_HOST:/tmp/"
 echo "→ Running deployment on VPS (this takes 5-10 minutes)..."
 echo ""
 
-ssh "$SSH_USER@$VPS_HOST" "bash /tmp/vps-setup.sh '$AGENT_NAME' '$TELEGRAM_TOKEN' '$AUTH_CHOICE' '$AUTH_CREDENTIAL' '$MODEL'"
+ssh "$SSH_USER@$VPS_HOST" "bash /tmp/vps-setup.sh '$AGENT_NAME' '$TELEGRAM_TOKEN' '$API_KEY' '$MODEL'"
 
 # Done
 echo ""
