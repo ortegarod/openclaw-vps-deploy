@@ -126,7 +126,7 @@ Add `--clean` to remove existing identity/workspace files:
 - Firewall (SSH + Gateway port)
 
 Replace:
-- `YOUR_VPS_IP` with VPS IP address (e.g., `YOUR_VPS_IP`)
+- `YOUR_VPS_IP` with VPS IP address (e.g., `203.0.113.10`)
 - `YOUR_SSH_USER` with SSH username (e.g., `ubuntu`, `root`)
 - `YOUR_TELEGRAM_TOKEN` with bot token from step 2
 - `USER_TELEGRAM_ID` with user's Telegram ID from step 3 (e.g., `987654321`)
