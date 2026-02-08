@@ -92,21 +92,16 @@ echo "✓ Onboarding complete"
 
 # Add Telegram channel configuration
 echo "→ Configuring Telegram channel..."
-openclaw gateway config.patch --raw '{
-  "channels": {
-    "telegram": {
-      "enabled": true,
-      "botToken": "'"$TELEGRAM_TOKEN"'",
-      "dmPolicy": "pairing"
-    }
-  }
-}' --note "Add Telegram channel"
+openclaw config set channels.telegram.enabled true
+openclaw config set channels.telegram.botToken "$TELEGRAM_TOKEN"
+openclaw config set channels.telegram.dmPolicy pairing
 
 echo "✓ Telegram configured"
 
-# Gateway should auto-start via daemon (installed with --install-daemon)
-echo "→ Waiting for gateway to start..."
-sleep 10
+# Restart gateway to apply Telegram config
+echo "→ Restarting gateway..."
+openclaw gateway restart
+sleep 5
 
 # Check status
 echo "→ Checking gateway status..."
