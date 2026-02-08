@@ -62,6 +62,7 @@ echo "✓ OpenClaw installed"
 echo "→ Running OpenClaw onboarding..."
 if [ "$AUTH_METHOD" = "apiKey" ]; then
   openclaw onboard --non-interactive \
+    --accept-risk \
     --mode local \
     --auth-choice apiKey \
     --anthropic-api-key "$AUTH_VALUE" \
@@ -72,6 +73,7 @@ if [ "$AUTH_METHOD" = "apiKey" ]; then
     --skip-skills
 elif [ "$AUTH_METHOD" = "token" ]; then
   openclaw onboard --non-interactive \
+    --accept-risk \
     --mode local \
     --auth-choice token \
     --token "$AUTH_VALUE" \
