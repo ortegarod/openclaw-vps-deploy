@@ -57,7 +57,7 @@ Save the token (format: `123456789:ABCdefGHIjklMNOpqrsTUVwxyz`)
 
 Have the user message [@userinfobot](https://t.me/userinfobot) on Telegram.
 
-It will reply with their user ID (format: `1273064446`)
+It will reply with their user ID (format: `987654321`)
 
 **Note:** This pre-authorizes the user so they can message the bot immediately.
 
@@ -126,10 +126,10 @@ Add `--clean` to remove existing identity/workspace files:
 - Firewall (SSH + Gateway port)
 
 Replace:
-- `YOUR_VPS_IP` with VPS IP address (e.g., `149.56.128.28`)
+- `YOUR_VPS_IP` with VPS IP address (e.g., `203.0.113.10`)
 - `YOUR_SSH_USER` with SSH username (e.g., `ubuntu`, `root`)
 - `YOUR_TELEGRAM_TOKEN` with bot token from step 2
-- `USER_TELEGRAM_ID` with user's Telegram ID from step 3 (e.g., `1273064446`)
+- `USER_TELEGRAM_ID` with user's Telegram ID from step 3 (e.g., `987654321`)
 - `YOUR_CLAUDE_API_KEY` with API key from step 4 **OR**
 - `YOUR_SETUP_TOKEN` with Claude setup-token
 
