@@ -25,31 +25,31 @@ echo ""
 # Update system
 echo "→ Updating system packages..."
 export DEBIAN_FRONTEND=noninteractive
-apt-get update -qq
-apt-get upgrade -y -qq
-apt-get install -y -qq curl git ufw
+sudo apt-get update -qq
+sudo apt-get upgrade -y -qq
+sudo apt-get install -y -qq curl git ufw
 
 # Configure firewall
 echo "→ Configuring firewall..."
-ufw --force enable
-ufw allow 22/tcp
-ufw allow 80/tcp
-ufw allow 443/tcp
-ufw allow 18789/tcp
-ufw reload
+sudo ufw --force enable
+sudo ufw allow 22/tcp
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo ufw allow 18789/tcp
+sudo ufw reload
 
 # Install OpenClaw (official installer)
 echo "→ Installing OpenClaw..."
 curl -fsSL https://openclaw.ai/install.sh | bash
 
 # Reload PATH
-export PATH="/root/.openclaw/bin:$PATH"
+export PATH="$HOME/.openclaw/bin:$PATH"
 source ~/.bashrc 2>/dev/null || true
 
 # Verify installation
 if ! command -v openclaw &> /dev/null; then
-    if [ -f "/root/.openclaw/bin/openclaw" ]; then
-        export PATH="/root/.openclaw/bin:$PATH"
+    if [ -f "$HOME/.openclaw/bin/openclaw" ]; then
+        export PATH="$HOME/.openclaw/bin:$PATH"
     else
         echo "❌ OpenClaw installation failed"
         exit 1
@@ -125,8 +125,8 @@ echo "========================================"
 echo "✅ Setup Complete!"
 echo "========================================"
 echo ""
-echo "Configuration: /root/.openclaw/openclaw.json"
-echo "Workspace: /root/.openclaw/workspace"
+echo "Configuration: $HOME/.openclaw/openclaw.json"
+echo "Workspace: $HOME/.openclaw/workspace"
 echo ""
 echo "Useful commands:"
 echo "  Check status: openclaw status"
