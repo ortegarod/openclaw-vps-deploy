@@ -2,9 +2,12 @@
 
 **Automated OpenClaw deployment to any Ubuntu VPS.**
 
-Deploy a production-ready OpenClaw instance in ~10 minutes using the official OpenClaw installer and onboarding wizard.
+Deploy OpenClaw in ~10 minutes using the official installer. Two modes available:
 
-**Uses:** [Official OpenClaw installer](https://docs.openclaw.ai/install) + [Onboarding wizard (non-interactive mode)](https://docs.openclaw.ai/reference/wizard#non-interactive-mode)
+1. **Managed Deployment** (turn-key): Fully configured, bot ready immediately
+2. **Self-Service Deployment**: Just install OpenClaw, customer configures via `openclaw onboard`
+
+**Uses:** [Official OpenClaw installer](https://docs.openclaw.ai/install) + [Onboarding wizard](https://docs.openclaw.ai/reference/wizard)
 
 ---
 
@@ -20,6 +23,17 @@ You'll need these before starting:
 ---
 
 ## Quick Start
+
+Choose your deployment mode:
+
+- **[Managed Deployment](#managed-deployment-turn-key)** - You handle everything, customer gets working bot
+- **[Self-Service Deployment](#self-service-deployment)** - Just install, customer configures
+
+---
+
+## Managed Deployment (Turn-Key)
+
+Use this when deploying for customers and handling all configuration.
 
 ### 1. Create a VPS
 
@@ -117,6 +131,55 @@ The script will:
 **Your bot is now live on Telegram!**
 
 The customer can message the bot immediately (no pairing approval needed) because their Telegram user ID was pre-authorized during deployment.
+
+---
+
+## Self-Service Deployment
+
+Use this when customers will configure their own credentials. You just provision the VPS and install OpenClaw.
+
+### 1. Create a VPS
+
+Same as managed deployment (see above).
+
+### 2. Run the Deploy Script (No Credentials)
+
+```bash
+git clone https://github.com/kali-claw/openclaw-vps-deploy.git
+cd openclaw-vps-deploy
+
+./deploy.sh \
+  --host YOUR_VPS_IP \
+  --user YOUR_SSH_USER
+```
+
+**That's it!** The script installs:
+- OpenClaw CLI
+- System dependencies (curl, git, ufw)
+- Firewall configuration
+
+### 3. Customer Completes Setup
+
+Send the customer these instructions:
+
+```bash
+# SSH into the VPS
+ssh YOUR_SSH_USER@YOUR_VPS_IP
+
+# Run the interactive onboarding wizard
+openclaw onboard
+
+# Follow the prompts to:
+# - Choose auth method (API key or setup-token)
+# - Enter credentials
+# - Configure Telegram bot
+# - Install daemon service
+```
+
+**Benefits:**
+- ✅ You never touch customer credentials
+- ✅ Customer has full control
+- ✅ Simpler for you (just provision VPS)
 
 ---
 
