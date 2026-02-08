@@ -45,6 +45,14 @@ Message [@BotFather](https://t.me/botfather) on Telegram:
 
 Save the token (format: `123456789:ABCdefGHIjklMNOpqrsTUVwxyz`)
 
+### 2.5 Get Customer's Telegram User ID
+
+The customer can find their Telegram user ID by messaging [@userinfobot](https://t.me/userinfobot) on Telegram.
+
+It will reply with their user ID (format: `1273064446`)
+
+**Note:** You need this to pre-authorize the customer so they can message the bot immediately after deployment.
+
 ### 3. Get a Claude API Key
 
 Go to [Anthropic Console](https://console.anthropic.com/):
@@ -58,6 +66,8 @@ Go to [Anthropic Console](https://console.anthropic.com/):
 
 ### 4. Run the Deploy Script
 
+**With API Key:**
+
 ```bash
 git clone https://github.com/kali-claw/openclaw-vps-deploy.git
 cd openclaw-vps-deploy
@@ -66,6 +76,7 @@ cd openclaw-vps-deploy
   --host YOUR_VPS_IP \
   --user YOUR_SSH_USER \
   --telegram-token "YOUR_TELEGRAM_TOKEN" \
+  --telegram-user-id YOUR_CUSTOMER_TELEGRAM_ID \
   --api-key "YOUR_CLAUDE_API_KEY"
 ```
 
@@ -76,13 +87,15 @@ cd openclaw-vps-deploy
   --host YOUR_VPS_IP \
   --user YOUR_SSH_USER \
   --telegram-token "YOUR_TELEGRAM_TOKEN" \
+  --telegram-user-id YOUR_CUSTOMER_TELEGRAM_ID \
   --token "YOUR_SETUP_TOKEN"
 ```
 
 Replace:
 - `YOUR_VPS_IP` with your VPS IP address (e.g., `149.56.128.28`)
 - `YOUR_SSH_USER` with your SSH username (e.g., `ubuntu`, `root`)
-- `YOUR_TELEGRAM_TOKEN` with the token from step 2
+- `YOUR_TELEGRAM_TOKEN` with the bot token from step 2
+- `YOUR_CUSTOMER_TELEGRAM_ID` with the customer's Telegram user ID from step 2.5 (e.g., `1273064446`)
 - `YOUR_CLAUDE_API_KEY` with the API key from step 3 **OR**
 - `YOUR_SETUP_TOKEN` with your Claude setup-token (run `claude setup-token` to generate)
 
@@ -97,11 +110,13 @@ Replace:
 The script will:
 1. Install OpenClaw using the official installer
 2. Run the onboarding wizard (non-interactive mode)
-3. Configure Telegram channel
+3. Configure Telegram channel with customer pre-authorized
 4. Install and start the OpenClaw daemon
 5. Configure firewall
 
 **Your bot is now live on Telegram!**
+
+The customer can message the bot immediately (no pairing approval needed) because their Telegram user ID was pre-authorized during deployment.
 
 ---
 

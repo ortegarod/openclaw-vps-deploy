@@ -10,9 +10,10 @@ set -e
 
 AGENT_NAME="$1"
 TELEGRAM_TOKEN="$2"
-AUTH_METHOD="$3"
-AUTH_VALUE="$4"
-MODEL="$5"
+TELEGRAM_USER_ID="$3"
+AUTH_METHOD="$4"
+AUTH_VALUE="$5"
+MODEL="$6"
 
 echo "========================================"
 echo "OpenClaw VPS Setup"
@@ -94,9 +95,10 @@ echo "✓ Onboarding complete"
 echo "→ Configuring Telegram channel..."
 openclaw config set channels.telegram.enabled true
 openclaw config set channels.telegram.botToken "$TELEGRAM_TOKEN"
-openclaw config set channels.telegram.dmPolicy pairing
+openclaw config set channels.telegram.dmPolicy allowlist
+openclaw config set channels.telegram.allowFrom "[$TELEGRAM_USER_ID]"
 
-echo "✓ Telegram configured"
+echo "✓ Telegram configured (pre-authorized user: $TELEGRAM_USER_ID)"
 
 # Restart gateway to apply Telegram config
 echo "→ Restarting gateway..."
