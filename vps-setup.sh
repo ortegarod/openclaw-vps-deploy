@@ -9,12 +9,13 @@
 set -e
 
 DEPLOYMENT_MODE="$1"
-AGENT_NAME="$2"
-TELEGRAM_TOKEN="$3"
-TELEGRAM_USER_ID="$4"
-AUTH_METHOD="$5"
-AUTH_VALUE="$6"
-MODEL="$7"
+CLEAN_INSTALL="$2"
+AGENT_NAME="$3"
+TELEGRAM_TOKEN="$4"
+TELEGRAM_USER_ID="$5"
+AUTH_METHOD="$6"
+AUTH_VALUE="$7"
+MODEL="$8"
 
 echo "========================================"
 echo "OpenClaw VPS Setup"
@@ -23,6 +24,9 @@ echo "Hostname: $(hostname)"
 echo "Mode: $DEPLOYMENT_MODE"
 if [ "$DEPLOYMENT_MODE" = "managed" ]; then
   echo "Agent: $AGENT_NAME"
+  if [ "$CLEAN_INSTALL" = "true" ]; then
+    echo "Clean install: Yes (will wipe workspace)"
+  fi
 fi
 echo "========================================"
 echo ""
@@ -64,6 +68,15 @@ fi
 echo "✓ OpenClaw installed"
 
 if [ "$DEPLOYMENT_MODE" = "managed" ]; then
+  # Clean workspace if requested
+  if [ "$CLEAN_INSTALL" = "true" ]; then
+    echo "→ Wiping existing workspace..."
+    rm -rf "$HOME/.openclaw/workspace"
+    rm -rf "$HOME/.openclaw/agents"
+    rm -rf "$HOME/.openclaw/credentials"
+    echo "✓ Workspace cleaned"
+  fi
+
   # Run onboarding wizard in non-interactive mode
   echo "→ Running OpenClaw onboarding..."
   if [ "$AUTH_METHOD" = "apiKey" ]; then
