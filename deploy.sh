@@ -49,10 +49,11 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     -h|--help)
-      echo "Usage: $0 --host <ip> --telegram-token <token> (--api-key <key> | --token <setup-token>) [options]"
+      echo "Usage: $0 --host <ip> --user <user> --telegram-token <token> (--api-key <key> | --token <setup-token>) [options]"
       echo ""
       echo "Required:"
-      echo "  --host <ip>               VPS IP address"
+      echo "  --host <ip>               VPS IP address (e.g., 149.56.128.28)"
+      echo "  --user <user>             SSH username (e.g., ubuntu, root)"
       echo "  --telegram-token <token>  Telegram bot token from @BotFather"
       echo ""
       echo "Auth (choose one):"
@@ -62,7 +63,8 @@ while [[ $# -gt 0 ]]; do
       echo "Optional:"
       echo "  --name <name>             Agent name (default: openclaw-agent)"
       echo "  --model <model>           Model to use (default: anthropic/claude-sonnet-4-5)"
-      echo "  --user <user>             SSH user (default: root)"
+      echo ""
+      echo "Note: Use the same IP and user that works in your SSH client/VS Code"
       echo ""
       exit 0
       ;;

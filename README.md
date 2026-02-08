@@ -64,16 +64,33 @@ cd openclaw-vps-deploy
 
 ./deploy.sh \
   --host YOUR_VPS_IP \
+  --user YOUR_SSH_USER \
   --telegram-token "YOUR_TELEGRAM_TOKEN" \
   --api-key "YOUR_CLAUDE_API_KEY"
 ```
 
-Replace:
-- `YOUR_VPS_IP` with your VPS IP from step 1
-- `YOUR_TELEGRAM_TOKEN` with the token from step 2
-- `YOUR_CLAUDE_API_KEY` with the API key from step 3
+**Or with Claude subscription setup-token:**
 
-**Note:** The script will prompt for SSH password if you don't have key-based auth set up
+```bash
+./deploy.sh \
+  --host YOUR_VPS_IP \
+  --user YOUR_SSH_USER \
+  --telegram-token "YOUR_TELEGRAM_TOKEN" \
+  --token "YOUR_SETUP_TOKEN"
+```
+
+Replace:
+- `YOUR_VPS_IP` with your VPS IP address (e.g., `149.56.128.28`)
+- `YOUR_SSH_USER` with your SSH username (e.g., `ubuntu`, `root`)
+- `YOUR_TELEGRAM_TOKEN` with the token from step 2
+- `YOUR_CLAUDE_API_KEY` with the API key from step 3 **OR**
+- `YOUR_SETUP_TOKEN` with your Claude setup-token (run `claude setup-token` to generate)
+
+**Important SSH notes:**
+- Use the **IP address**, not the hostname (unless DNS is configured)
+- Specify `--user` to match your SSH config (default is `root`)
+- The script uses your existing SSH keys automatically
+- If you have VS Code or SSH access working, use the same IP and user
 
 ### 5. Done!
 
@@ -160,10 +177,24 @@ openclaw gateway restart
 
 ## Troubleshooting
 
+### SSH connection fails
+
+If you see "Permission denied" or "Cannot connect":
+
+1. **Check your SSH config** (`~/.ssh/config`) if you use VS Code or similar tools
+2. **Use the same IP and user** that works in your SSH client:
+   ```bash
+   ./deploy.sh --host YOUR_IP --user YOUR_USER --telegram-token "..." --token "..."
+   ```
+3. **Test SSH manually first:**
+   ```bash
+   ssh YOUR_USER@YOUR_IP
+   ```
+
 ### Bot not responding
 
 ```bash
-ssh root@your-vps-ip
+ssh YOUR_USER@YOUR_IP
 openclaw status
 openclaw logs
 ```
