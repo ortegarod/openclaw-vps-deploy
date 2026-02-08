@@ -1,308 +1,221 @@
 # OpenClaw VPS Deployment
 
-**Automated OpenClaw deployment to any Ubuntu VPS.**
+**One-command deployment of OpenClaw to any Ubuntu VPS.**
 
-Deploy OpenClaw in ~10 minutes using the official installer. Two modes available:
+Automated deployment script using the [official OpenClaw installer](https://docs.openclaw.ai/install). Deploy in ~10 minutes with two modes:
 
-1. **Managed Deployment** (turn-key): Fully configured, bot ready immediately
-2. **Self-Service Deployment**: Just install OpenClaw, customer configures via `openclaw onboard`
+1. **Fully Configured** — Provide credentials, bot ready immediately
+2. **Install Only** — Install OpenClaw, configure interactively later
 
-**Uses:** [Official OpenClaw installer](https://docs.openclaw.ai/install) + [Onboarding wizard](https://docs.openclaw.ai/reference/wizard)
+---
+
+## Use Cases
+
+- 🏠 **Personal use** — Deploy your own AI assistant on a VPS
+- 💼 **Managed services** — Deploy pre-configured instances for clients
+- 🧪 **Development** — Quick testing environment on a fresh VPS
+- 👥 **Team deployments** — Provision infrastructure, let users configure their own credentials
 
 ---
 
 ## Prerequisites
 
-You'll need these before starting:
+**For all deployments:**
+- Ubuntu 24.04 VPS (4GB RAM minimum, 40GB+ storage)
+- SSH access (key-based recommended)
 
-1. **VPS** - Ubuntu 24.04 server from any provider
-2. **SSH access** - SSH key (recommended) or password
-3. **Telegram bot token** - From @BotFather
-4. **Claude API key** - From Anthropic Console
+**For fully configured deployments (optional):**
+- Telegram bot token from [@BotFather](https://t.me/botfather)
+- User's Telegram ID (get via [@userinfobot](https://t.me/userinfobot))
+- Anthropic API key or Claude setup-token
 
 ---
 
 ## Quick Start
 
-Choose your deployment mode:
+### Install-Only Mode (Simplest)
 
-- **[Managed Deployment](#managed-deployment-turn-key)** - You handle everything, customer gets working bot
-- **[Self-Service Deployment](#self-service-deployment)** - Just install, customer configures
-
----
-
-## Managed Deployment (Turn-Key)
-
-Use this when deploying for customers and handling all configuration.
-
-### 1. Create a VPS
-
-**Recommended providers:**
-- [Hetzner Cloud](https://www.hetzner.com/cloud)
-- [OVH](https://www.ovhcloud.com/)
-- [DigitalOcean](https://www.digitalocean.com/)
-
-**Specs:**
-- OS: Ubuntu 24.04
-- RAM: 4GB minimum
-- Storage: 40GB+
-- Add your SSH key during creation
-
-### 2. Create a Telegram Bot
-
-Message [@BotFather](https://t.me/botfather) on Telegram:
-
-```
-/newbot
-[Follow the prompts]
-```
-
-Save the token (format: `123456789:ABCdefGHIjklMNOpqrsTUVwxyz`)
-
-### 2.5 Get Customer's Telegram User ID
-
-The customer can find their Telegram user ID by messaging [@userinfobot](https://t.me/userinfobot) on Telegram.
-
-It will reply with their user ID (format: `1273064446`)
-
-**Note:** You need this to pre-authorize the customer so they can message the bot immediately after deployment.
-
-### 3. Get a Claude API Key
-
-Go to [Anthropic Console](https://console.anthropic.com/):
-
-1. Sign up or log in
-2. Go to **API Keys** section
-3. Click **Create Key**
-4. Save the key (format: `sk-ant-api03-...`)
-
-**Note:** The script uses API key authentication (pay-as-you-go billing)
-
-### 4. Run the Deploy Script
-
-**With API Key:**
+Install OpenClaw, user configures their own credentials:
 
 ```bash
 git clone https://github.com/kali-claw/openclaw-vps-deploy.git
 cd openclaw-vps-deploy
 
-./deploy.sh \
-  --host YOUR_VPS_IP \
-  --user YOUR_SSH_USER \
-  --telegram-token "YOUR_TELEGRAM_TOKEN" \
-  --telegram-user-id YOUR_CUSTOMER_TELEGRAM_ID \
-  --api-key "YOUR_CLAUDE_API_KEY"
+./deploy.sh --host YOUR_VPS_IP --user YOUR_SSH_USER
 ```
 
-**Or with Claude subscription setup-token:**
+Then SSH in and run the interactive wizard:
+```bash
+ssh YOUR_SSH_USER@YOUR_VPS_IP
+openclaw onboard
+```
+
+---
+
+### Fully Configured Mode (Turn-Key)
+
+Provide all credentials upfront, bot ready immediately:
 
 ```bash
 ./deploy.sh \
   --host YOUR_VPS_IP \
   --user YOUR_SSH_USER \
-  --telegram-token "YOUR_TELEGRAM_TOKEN" \
-  --telegram-user-id YOUR_CUSTOMER_TELEGRAM_ID \
-  --token "YOUR_SETUP_TOKEN"
+  --telegram-token "TELEGRAM_BOT_TOKEN" \
+  --telegram-user-id TELEGRAM_USER_ID \
+  --api-key "ANTHROPIC_API_KEY"
 ```
 
-**Fresh installation (wipe existing workspace):**
-
-Add `--clean` to any managed deployment to remove existing identity/workspace files:
-
+**Or with Claude subscription:**
 ```bash
 ./deploy.sh \
   --host YOUR_VPS_IP \
   --user YOUR_SSH_USER \
-  --telegram-token "YOUR_TELEGRAM_TOKEN" \
-  --telegram-user-id YOUR_CUSTOMER_TELEGRAM_ID \
-  --token "YOUR_SETUP_TOKEN" \
+  --telegram-token "TELEGRAM_BOT_TOKEN" \
+  --telegram-user-id TELEGRAM_USER_ID \
+  --token "CLAUDE_SETUP_TOKEN"
+```
+
+**Fresh installation (wipe existing data):**
+```bash
+./deploy.sh \
+  --host YOUR_VPS_IP \
+  --user YOUR_SSH_USER \
+  --telegram-token "..." \
+  --telegram-user-id ... \
+  --token "..." \
   --clean
 ```
 
-**Use `--clean` when:**
-- Redeploying to an existing VPS
-- Customer wants a fresh start
-- Previous bot identity should be removed
-
-Replace:
-- `YOUR_VPS_IP` with your VPS IP address (e.g., `149.56.128.28`)
-- `YOUR_SSH_USER` with your SSH username (e.g., `ubuntu`, `root`)
-- `YOUR_TELEGRAM_TOKEN` with the bot token from step 2
-- `YOUR_CUSTOMER_TELEGRAM_ID` with the customer's Telegram user ID from step 2.5 (e.g., `1273064446`)
-- `YOUR_CLAUDE_API_KEY` with the API key from step 3 **OR**
-- `YOUR_SETUP_TOKEN` with your Claude setup-token (run `claude setup-token` to generate)
-
-**Important SSH notes:**
-- Use the **IP address**, not the hostname (unless DNS is configured)
-- Specify `--user` to match your SSH config (default is `root`)
-- The script uses your existing SSH keys automatically
-- If you have VS Code or SSH access working, use the same IP and user
-
-### 5. Done!
-
-The script will:
-1. Install OpenClaw using the official installer
-2. Run the onboarding wizard (non-interactive mode)
-3. Configure Telegram channel with customer pre-authorized
-4. Install and start the OpenClaw daemon
-5. Configure firewall
-
-**Your bot is now live on Telegram!**
-
-The customer can message the bot immediately (no pairing approval needed) because their Telegram user ID was pre-authorized during deployment.
+The `--clean` flag removes existing workspace/identity files before deployment. Use when redeploying to an existing VPS.
 
 ---
 
-## Self-Service Deployment
+## Command Reference
 
-Use this when customers will configure their own credentials. You just provision the VPS and install OpenClaw.
+### Required Flags
 
-### 1. Create a VPS
+- `--host <ip>` — VPS IP address (e.g., `149.56.128.28`)
+- `--user <user>` — SSH username (e.g., `ubuntu`, `root`)
 
-Same as managed deployment (see above).
+### Optional Flags (Fully Configured Mode)
 
-### 2. Run the Deploy Script (No Credentials)
+When any of these are provided, the script runs in **fully configured mode** and requires all credential flags:
 
-```bash
-git clone https://github.com/kali-claw/openclaw-vps-deploy.git
-cd openclaw-vps-deploy
+- `--telegram-token <token>` — Bot token from @BotFather
+- `--telegram-user-id <id>` — User's Telegram ID (e.g., `1273064446`)
+- `--api-key <key>` — Anthropic API key (`sk-ant-...`)
+- `--token <token>` — Claude setup-token (from `claude setup-token`)
 
-./deploy.sh \
-  --host YOUR_VPS_IP \
-  --user YOUR_SSH_USER
-```
+### Additional Options
 
-**That's it!** The script installs:
-- OpenClaw CLI
-- System dependencies (curl, git, ufw)
-- Firewall configuration
-
-### 3. Customer Completes Setup
-
-Send the customer these instructions:
-
-```bash
-# SSH into the VPS
-ssh YOUR_SSH_USER@YOUR_VPS_IP
-
-# Run the interactive onboarding wizard
-openclaw onboard
-
-# Follow the prompts to:
-# - Choose auth method (API key or setup-token)
-# - Enter credentials
-# - Configure Telegram bot
-# - Install daemon service
-```
-
-**Benefits:**
-- ✅ You never touch customer credentials
-- ✅ Customer has full control
-- ✅ Simpler for you (just provision VPS)
+- `--name <name>` — Agent name (default: `openclaw-agent`)
+- `--model <model>` — Model to use (default: `anthropic/claude-sonnet-4-5`)
+- `--clean` — Wipe existing workspace before deployment (fresh start)
 
 ---
 
-## What Gets Deployed
+## What Gets Installed
 
-The script follows the official OpenClaw installation process:
+The script installs:
 
-1. **Installs OpenClaw** via `curl -fsSL https://openclaw.ai/install.sh | bash`
-2. **Runs onboarding** via `openclaw onboard --non-interactive` with your settings
-3. **Adds Telegram** via `openclaw channels add --channel telegram`
-4. **Installs daemon** systemd service for auto-restart
+1. **OpenClaw CLI** — Via official installer (`curl -fsSL https://openclaw.ai/install.sh | bash`)
+2. **System packages** — curl, git, ufw (firewall)
+3. **Firewall rules** — SSH (22), HTTP (80), HTTPS (443), Gateway (18789)
+
+### In Fully Configured Mode
+
+Additionally configures:
+4. **Onboarding** — Non-interactive setup with provided credentials
+5. **Telegram channel** — Pre-authorized for specified user ID
+6. **Gateway daemon** — Auto-starts via systemd
 
 ### Directory Structure
 
 ```
-/root/.openclaw/
-├── bin/openclaw            # OpenClaw binary
-├── openclaw.json           # Configuration
-└── workspace/              # Agent workspace
-    ├── AGENTS.md
-    ├── IDENTITY.md
-    ├── SOUL.md
-    └── ...
+~/.openclaw/
+├── bin/openclaw              # OpenClaw CLI
+├── openclaw.json             # Configuration
+├── workspace/                # Agent workspace (SOUL.md, IDENTITY.md, etc.)
+├── agents/main/sessions/     # Session history
+└── credentials/              # Channel credentials
 ```
 
 ---
 
 ## Post-Deployment
 
-### Customize the Agent
+### Install-Only Mode
 
-SSH into your VPS and edit workspace files:
-
-```bash
-ssh root@your-vps-ip
-nano /root/.openclaw/workspace/IDENTITY.md
-nano /root/.openclaw/workspace/SOUL.md
-```
-
-Restart to apply changes:
-```bash
-openclaw gateway restart
-```
-
-### Check Status
+SSH into the VPS and complete setup:
 
 ```bash
-ssh root@your-vps-ip
-openclaw status
+ssh YOUR_SSH_USER@YOUR_VPS_IP
+openclaw onboard  # Interactive wizard
 ```
 
-### View Logs
+The wizard will guide you through:
+- Authentication (API key or setup-token)
+- Model selection
+- Channel configuration (Telegram, WhatsApp, etc.)
+- Daemon installation
 
-```bash
-openclaw logs
-```
+### Fully Configured Mode
 
-### Restart Gateway
+The bot is ready immediately! User can:
+- Message the bot on Telegram (pre-authorized)
+- Check status: `ssh YOUR_SSH_USER@YOUR_VPS_IP 'openclaw status'`
+- View logs: `ssh YOUR_SSH_USER@YOUR_VPS_IP 'openclaw logs --follow'`
 
-```bash
-openclaw gateway restart
-```
+---
 
-### Update OpenClaw
+## VPS Providers
 
-```bash
-# Re-run the installer
-curl -fsSL https://openclaw.ai/install.sh | bash
-openclaw gateway restart
-```
+**Recommended:**
+
+- **[Hetzner Cloud](https://www.hetzner.com/cloud)** — €4.51/mo for 4GB RAM
+- **[OVH](https://www.ovhcloud.com/)** — Budget-friendly VPS options
+- **[DigitalOcean](https://www.digitalocean.com/)** — $24/mo for 4GB RAM
+
+**Minimum specs:**
+- 4GB RAM
+- 40GB+ storage
+- Ubuntu 24.04
 
 ---
 
 ## Troubleshooting
 
-### SSH connection fails
+### SSH Connection Issues
 
-If you see "Permission denied" or "Cannot connect":
+If deployment fails to connect:
 
-1. **Check your SSH config** (`~/.ssh/config`) if you use VS Code or similar tools
-2. **Use the same IP and user** that works in your SSH client:
-   ```bash
-   ./deploy.sh --host YOUR_IP --user YOUR_USER --telegram-token "..." --token "..."
-   ```
-3. **Test SSH manually first:**
+1. **Verify SSH access works manually:**
    ```bash
    ssh YOUR_USER@YOUR_IP
    ```
 
-### Bot not responding
+2. **Use the same IP/user** that works in your SSH client:
+   ```bash
+   ./deploy.sh --host YOUR_IP --user YOUR_USER
+   ```
+
+3. **Check your SSH config** (`~/.ssh/config`) if you use VS Code or similar tools
+
+### Bot Not Responding
 
 ```bash
 ssh YOUR_USER@YOUR_IP
 openclaw status
-openclaw logs
+openclaw logs --follow
 ```
 
-### Gateway not running
+### Gateway Not Running
 
 ```bash
 openclaw gateway start
 ```
 
-### Check Telegram configuration
+### Check Telegram Configuration
 
 ```bash
 openclaw channels list
@@ -310,31 +223,76 @@ openclaw channels list
 
 ---
 
-## Security
+## Security Notes
 
-The deployment includes:
-- UFW firewall (SSH, HTTP, HTTPS, Gateway port)
-- Systemd service isolation
+**The script deploys OpenClaw with:**
+- ✅ Firewall enabled (UFW)
+- ✅ DM pairing or allowlist (not open by default)
+- ✅ Group mention gating (bot only responds when mentioned)
 
-**Additional recommendations:**
-- Change SSH port from 22
-- Disable password auth (key-only)
-- Set up fail2ban
+**For production deployments:**
+- Use SSH keys (not passwords)
+- Keep the VPS updated: `sudo apt update && sudo apt upgrade`
+- Review [OpenClaw security docs](https://docs.openclaw.ai/security)
+- Run security audit: `openclaw security audit`
+
+---
+
+## Examples
+
+### Personal Assistant Deployment
+
+```bash
+# Install only, configure your own credentials
+./deploy.sh --host 149.56.128.28 --user ubuntu
+```
+
+### Managed Service Deployment
+
+```bash
+# Fully configured for a client
+./deploy.sh \
+  --host 149.56.128.28 \
+  --user ubuntu \
+  --telegram-token "123456:ABCdef..." \
+  --telegram-user-id 987654321 \
+  --api-key "sk-ant-api03-..."
+```
+
+### Fresh Re-deployment
+
+```bash
+# Wipe existing workspace and redeploy
+./deploy.sh \
+  --host 149.56.128.28 \
+  --user ubuntu \
+  --telegram-token "..." \
+  --telegram-user-id ... \
+  --token "..." \
+  --clean
+```
 
 ---
 
 ## Documentation
 
-- [OpenClaw Documentation](https://docs.openclaw.ai)
+- [OpenClaw Docs](https://docs.openclaw.ai)
+- [Installation Guide](https://docs.openclaw.ai/install)
 - [Onboarding Wizard](https://docs.openclaw.ai/start/wizard)
-- [CLI Reference](https://docs.openclaw.ai/cli)
 - [Channels](https://docs.openclaw.ai/channels)
+- [Security](https://docs.openclaw.ai/security)
 
 ---
 
 ## Contributing
 
-Contributions welcome! Please test on a clean VPS before submitting PR.
+Contributions welcome! This script uses only officially documented OpenClaw CLI commands.
+
+**To contribute:**
+1. Test on a clean Ubuntu 24.04 VPS
+2. Verify both deployment modes work
+3. Update README if adding new flags
+4. Submit a pull request
 
 ---
 
@@ -346,6 +304,6 @@ MIT License - See [LICENSE](LICENSE)
 
 ## Credits
 
-Built by [@kali-claw](https://github.com/kali-claw) using official OpenClaw methods.
+Built using the [official OpenClaw installer](https://openclaw.ai/install.sh) and [documented CLI commands](https://docs.openclaw.ai/cli).
 
 **Questions?** [OpenClaw Discord](https://discord.com/invite/clawd)
