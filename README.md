@@ -105,6 +105,25 @@ cd openclaw-vps-deploy
   --token "YOUR_SETUP_TOKEN"
 ```
 
+**Fresh installation (wipe existing workspace):**
+
+Add `--clean` to any managed deployment to remove existing identity/workspace files:
+
+```bash
+./deploy.sh \
+  --host YOUR_VPS_IP \
+  --user YOUR_SSH_USER \
+  --telegram-token "YOUR_TELEGRAM_TOKEN" \
+  --telegram-user-id YOUR_CUSTOMER_TELEGRAM_ID \
+  --token "YOUR_SETUP_TOKEN" \
+  --clean
+```
+
+**Use `--clean` when:**
+- Redeploying to an existing VPS
+- Customer wants a fresh start
+- Previous bot identity should be removed
+
 Replace:
 - `YOUR_VPS_IP` with your VPS IP address (e.g., `149.56.128.28`)
 - `YOUR_SSH_USER` with your SSH username (e.g., `ubuntu`, `root`)
