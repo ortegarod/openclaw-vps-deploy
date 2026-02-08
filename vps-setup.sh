@@ -42,8 +42,6 @@ sudo apt-get install -y -qq curl git ufw
 echo "→ Configuring firewall..."
 sudo ufw --force enable
 sudo ufw allow 22/tcp
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
 sudo ufw allow 18789/tcp
 sudo ufw reload
 
