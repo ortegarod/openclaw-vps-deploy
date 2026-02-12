@@ -155,9 +155,9 @@ if [ "$DEPLOYMENT_MODE" = "managed" ]; then
       sleep 5
   fi
 
-  # Run doctor check
+  # Run doctor check (non-interactive)
   echo "→ Running diagnostics..."
-  openclaw doctor || true
+  openclaw doctor --non-interactive || true
 else
   # Self-service mode - just basic installation
   echo "✓ Self-service installation complete"
