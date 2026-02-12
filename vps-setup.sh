@@ -133,6 +133,10 @@ if [ "$DEPLOYMENT_MODE" = "managed" ]; then
       dmPolicy: 'allowlist',
       allowFrom: ['tg:' + process.argv[3]]
     };
+    // Ensure Telegram plugin is enabled (onboarding may disable it by default)
+    if (config.plugins?.entries?.telegram) {
+      config.plugins.entries.telegram.enabled = true;
+    }
     fs.writeFileSync(process.argv[1], JSON.stringify(config, null, 2));
   " "$CONFIG_FILE" "$TELEGRAM_TOKEN" "$TELEGRAM_USER_ID"
 
