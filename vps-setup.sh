@@ -86,8 +86,6 @@ if [ "$DEPLOYMENT_MODE" = "managed" ]; then
       --anthropic-api-key "$AUTH_VALUE" \
       --gateway-port 18789 \
       --gateway-bind lan \
-      --install-daemon \
-      --daemon-runtime node \
       --skip-skills
   elif [ "$AUTH_METHOD" = "token" ]; then
     openclaw onboard --non-interactive \
@@ -98,50 +96,41 @@ if [ "$DEPLOYMENT_MODE" = "managed" ]; then
       --token-provider anthropic \
       --gateway-port 18789 \
       --gateway-bind lan \
-      --install-daemon \
-      --daemon-runtime node \
       --skip-skills
   else
     echo "❌ Invalid auth method: $AUTH_METHOD"
     exit 1
   fi
 
-  echo "✓ Onboarding complete"
+  echo "✓ Onboarding complete (no daemon yet)"
 
-  # Stop gateway before configuring (avoid pairing issues)
-  echo "→ Stopping gateway for configuration..."
-  openclaw gateway stop 2>/dev/null || true
-  sleep 2
-
-  # Add Telegram channel configuration (edit JSON directly to avoid pairing issues)
+  # Add Telegram channel configuration
+  # Non-interactive onboarding doesn't support channel flags,
+  # so we edit openclaw.json directly per the config reference:
+  # https://docs.openclaw.ai/gateway/configuration-reference#telegram
   echo "→ Configuring Telegram channel..."
   CONFIG_FILE="$HOME/.openclaw/openclaw.json"
-  
-  # Use jq if available, otherwise use node
-  if command -v jq &> /dev/null; then
-    jq --arg token "$TELEGRAM_TOKEN" --argjson userid "$TELEGRAM_USER_ID" \
-      '.channels.telegram = {enabled: true, botToken: $token, dmPolicy: "allowlist", allowFrom: [$userid]}' \
-      "$CONFIG_FILE" > "$CONFIG_FILE.tmp" && mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
-  else
-    node -e "
-      const fs = require('fs');
-      const config = JSON.parse(fs.readFileSync('$CONFIG_FILE', 'utf8'));
-      config.channels = config.channels || {};
-      config.channels.telegram = {
-        enabled: true,
-        botToken: '$TELEGRAM_TOKEN',
-        dmPolicy: 'allowlist',
-        allowFrom: [$TELEGRAM_USER_ID]
-      };
-      fs.writeFileSync('$CONFIG_FILE', JSON.stringify(config, null, 2));
-    "
-  fi
+
+  node -e "
+    const fs = require('fs');
+    const config = JSON.parse(fs.readFileSync(process.argv[1], 'utf8'));
+    config.channels = config.channels || {};
+    config.channels.telegram = {
+      enabled: true,
+      botToken: process.argv[2],
+      dmPolicy: 'allowlist',
+      allowFrom: ['tg:' + process.argv[3]]
+    };
+    fs.writeFileSync(process.argv[1], JSON.stringify(config, null, 2));
+  " "$CONFIG_FILE" "$TELEGRAM_TOKEN" "$TELEGRAM_USER_ID"
 
   echo "✓ Telegram configured (pre-authorized user: $TELEGRAM_USER_ID)"
 
-  # Restart gateway to apply Telegram config
-  echo "→ Restarting gateway..."
-  openclaw gateway restart
+  # Install daemon and start gateway (Telegram config is now in place)
+  echo "→ Installing daemon service..."
+  openclaw daemon install --runtime node
+  echo "→ Starting gateway..."
+  openclaw gateway start
   sleep 5
 
   # Check status
