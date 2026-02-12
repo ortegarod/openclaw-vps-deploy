@@ -45,6 +45,12 @@ sudo ufw allow 22/tcp
 sudo ufw allow 18789/tcp
 sudo ufw reload
 
+# Stop existing daemon if present (prevents installer from auto-restarting stale config)
+if systemctl --user is-active openclaw-gateway &>/dev/null; then
+  echo "→ Stopping existing gateway daemon..."
+  systemctl --user stop openclaw-gateway 2>/dev/null || true
+fi
+
 # Install OpenClaw (official installer)
 echo "→ Installing OpenClaw..."
 curl -fsSL https://openclaw.ai/install.sh | bash -s -- --no-onboard
@@ -67,13 +73,18 @@ fi
 echo "✓ OpenClaw installed"
 
 if [ "$DEPLOYMENT_MODE" = "managed" ]; then
-  # Clean workspace if requested
+  # Clean install: stop old daemon and wipe workspace
   if [ "$CLEAN_INSTALL" = "true" ]; then
+    echo "→ Stopping existing daemon..."
+    systemctl --user stop openclaw-gateway 2>/dev/null || true
+    systemctl --user disable openclaw-gateway 2>/dev/null || true
+    rm -f "$HOME/.config/systemd/user/openclaw-gateway.service"
+    systemctl --user daemon-reload 2>/dev/null || true
     echo "→ Wiping existing workspace..."
     rm -rf "$HOME/.openclaw/workspace"
     rm -rf "$HOME/.openclaw/agents"
     rm -rf "$HOME/.openclaw/credentials"
-    echo "✓ Workspace cleaned"
+    echo "✓ Old daemon stopped and workspace cleaned"
   fi
 
   # Run onboarding wizard in non-interactive mode
