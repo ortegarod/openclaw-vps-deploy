@@ -159,7 +159,7 @@ else
 fi
 echo ""
 
-ssh "$SSH_USER@$VPS_HOST" "bash /tmp/vps-setup.sh '$DEPLOYMENT_MODE' '$CLEAN_INSTALL' '$AGENT_NAME' '$TELEGRAM_TOKEN' '$TELEGRAM_USER_ID' '$AUTH_METHOD' '$AUTH_VALUE' '$MODEL'"
+ssh -t "$SSH_USER@$VPS_HOST" "bash /tmp/vps-setup.sh '$DEPLOYMENT_MODE' '$CLEAN_INSTALL' '$AGENT_NAME' '$TELEGRAM_TOKEN' '$TELEGRAM_USER_ID' '$AUTH_METHOD' '$AUTH_VALUE' '$MODEL'"
 
 # Done
 echo ""

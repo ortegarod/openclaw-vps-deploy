@@ -42,7 +42,42 @@ Provide credentials during deployment. Bot will be ready to message immediately.
 - RAM: 4GB minimum
 - Storage: 40GB+
 
-#### 2. Create a Telegram Bot
+#### 2. Verify SSH Access
+
+**Before running the deployment script**, connect to your VPS and verify access:
+
+```bash
+ssh YOUR_SSH_USER@YOUR_VPS_IP
+```
+
+**First-time connection checklist:**
+- Accept the host key fingerprint when prompted
+- Change the default password if required by your provider
+- Verify you can execute commands (e.g., `sudo apt update`)
+
+**Recommended: Set up SSH key authentication**
+
+This prevents password prompts during deployment:
+
+```bash
+# On your local machine
+ssh-copy-id YOUR_SSH_USER@YOUR_VPS_IP
+```
+
+Or manually:
+```bash
+cat ~/.ssh/id_rsa.pub | ssh YOUR_SSH_USER@YOUR_VPS_IP "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
+```
+
+**Verify passwordless login:**
+```bash
+ssh YOUR_SSH_USER@YOUR_VPS_IP
+# Should connect without password prompt
+```
+
+Once you can SSH in without issues, proceed to the next step.
+
+#### 3. Create a Telegram Bot
 
 Message [@BotFather](https://t.me/botfather) on Telegram:
 
@@ -53,7 +88,7 @@ Message [@BotFather](https://t.me/botfather) on Telegram:
 
 Save the token (format: `123456789:ABCdefGHIjklMNOpqrsTUVwxyz`)
 
-#### 3. Get User's Telegram ID
+#### 4. Get User's Telegram ID
 
 Have the user message [@userinfobot](https://t.me/userinfobot) on Telegram.
 
@@ -61,7 +96,7 @@ It will reply with their user ID (format: `987654321`)
 
 **Note:** This pre-authorizes the user so they can message the bot immediately.
 
-#### 4. Get Authentication
+#### 5. Get Authentication
 
 Go to [Anthropic Console](https://console.anthropic.com/):
 
@@ -72,14 +107,18 @@ Go to [Anthropic Console](https://console.anthropic.com/):
 
 **Or** use Claude subscription setup-token: `claude setup-token`
 
-#### 5. Run the Deploy Script
+#### 6. Clone the Deployment Script
+
+```bash
+git clone https://github.com/ortegarod/openclaw-vps-deploy.git
+cd openclaw-vps-deploy
+```
+
+#### 7. Run the Deploy Script
 
 **With API Key:**
 
 ```bash
-git clone https://github.com/kali-claw/openclaw-vps-deploy.git
-cd openclaw-vps-deploy
-
 ./deploy.sh \
   --host YOUR_VPS_IP \
   --user YOUR_SSH_USER \
@@ -128,9 +167,9 @@ Add `--clean` to remove existing identity/workspace files:
 Replace:
 - `YOUR_VPS_IP` with VPS IP address (e.g., `203.0.113.10`)
 - `YOUR_SSH_USER` with SSH username (e.g., `ubuntu`, `root`)
-- `YOUR_TELEGRAM_TOKEN` with bot token from step 2
-- `USER_TELEGRAM_ID` with user's Telegram ID from step 3 (e.g., `987654321`)
-- `YOUR_CLAUDE_API_KEY` with API key from step 4 **OR**
+- `YOUR_TELEGRAM_TOKEN` with bot token from step 3
+- `USER_TELEGRAM_ID` with user's Telegram ID from step 4 (e.g., `987654321`)
+- `YOUR_CLAUDE_API_KEY` with API key from step 5 **OR**
 - `YOUR_SETUP_TOKEN` with Claude setup-token
 
 **Important SSH notes:**
@@ -139,7 +178,7 @@ Replace:
 - Script uses your existing SSH keys automatically
 - If VS Code or SSH access works, use the same IP and user
 
-#### 6. Done!
+#### 8. Done!
 
 **Bot is ready!** User can message on Telegram immediately (pre-authorized, no pairing needed).
 
@@ -156,7 +195,7 @@ Same as configured deployment (see above).
 #### 2. Run the Deploy Script
 
 ```bash
-git clone https://github.com/kali-claw/openclaw-vps-deploy.git
+git clone https://github.com/ortegarod/openclaw-vps-deploy.git
 cd openclaw-vps-deploy
 
 ./deploy.sh \
