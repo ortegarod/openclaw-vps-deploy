@@ -47,11 +47,12 @@ sudo ufw reload
 
 # Install OpenClaw (official installer)
 echo "→ Installing OpenClaw..."
-curl -fsSL https://openclaw.ai/install.sh | bash
+curl -fsSL https://openclaw.ai/install.sh | bash -s -- --no-onboard
 
-# Reload PATH
-export PATH="$HOME/.openclaw/bin:$PATH"
+# Reload PATH (installer may have updated it)
+export PATH="$HOME/.npm-global/bin:$HOME/.openclaw/bin:$PATH"
 source ~/.bashrc 2>/dev/null || true
+source ~/.profile 2>/dev/null || true
 
 # Verify installation
 if ! command -v openclaw &> /dev/null; then
@@ -107,12 +108,34 @@ if [ "$DEPLOYMENT_MODE" = "managed" ]; then
 
   echo "✓ Onboarding complete"
 
-  # Add Telegram channel configuration
+  # Stop gateway before configuring (avoid pairing issues)
+  echo "→ Stopping gateway for configuration..."
+  openclaw gateway stop 2>/dev/null || true
+  sleep 2
+
+  # Add Telegram channel configuration (edit JSON directly to avoid pairing issues)
   echo "→ Configuring Telegram channel..."
-  openclaw config set channels.telegram.enabled true
-  openclaw config set channels.telegram.botToken "$TELEGRAM_TOKEN"
-  openclaw config set channels.telegram.dmPolicy allowlist
-  openclaw config set channels.telegram.allowFrom "[$TELEGRAM_USER_ID]"
+  CONFIG_FILE="$HOME/.openclaw/openclaw.json"
+  
+  # Use jq if available, otherwise use node
+  if command -v jq &> /dev/null; then
+    jq --arg token "$TELEGRAM_TOKEN" --argjson userid "$TELEGRAM_USER_ID" \
+      '.channels.telegram = {enabled: true, botToken: $token, dmPolicy: "allowlist", allowFrom: [$userid]}' \
+      "$CONFIG_FILE" > "$CONFIG_FILE.tmp" && mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
+  else
+    node -e "
+      const fs = require('fs');
+      const config = JSON.parse(fs.readFileSync('$CONFIG_FILE', 'utf8'));
+      config.channels = config.channels || {};
+      config.channels.telegram = {
+        enabled: true,
+        botToken: '$TELEGRAM_TOKEN',
+        dmPolicy: 'allowlist',
+        allowFrom: [$TELEGRAM_USER_ID]
+      };
+      fs.writeFileSync('$CONFIG_FILE', JSON.stringify(config, null, 2));
+    "
+  fi
 
   echo "✓ Telegram configured (pre-authorized user: $TELEGRAM_USER_ID)"
 

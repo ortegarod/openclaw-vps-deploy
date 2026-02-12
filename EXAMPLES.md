@@ -1,159 +1,141 @@
 # Deployment Examples
 
-Common deployment scenarios for OpenClaw on VPS.
+Common deployment scenarios.
 
 ---
 
-## Basic Deployment
+## Configured Deployment (Full Setup)
 
-**Minimal setup with defaults:**
+Bot ready to message immediately.
+
+### Basic Setup
 
 ```bash
 ./deploy.sh \
   --host 203.0.113.45 \
+  --user ubuntu \
   --telegram-token "123456789:ABCdefGHIjklMNOpqrsTUVwxyz" \
+  --telegram-user-id 987654321 \
   --api-key "sk-ant-api03-..."
 ```
 
-This creates:
-- Agent named "openclaw-agent"
-- Using claude-sonnet-4-5
-- SSH as root
-
----
-
-## Custom Agent Name
-
-**Deploy with a specific name:**
-
-```bash
-./deploy.sh \
-  --host 203.0.113.45 \
-  --name "research-assistant" \
-  --telegram-token "123456:ABC..." \
-  --api-key "sk-ant-..."
-```
-
----
-
-## Different Model
-
-**Use Claude Opus instead of Sonnet:**
-
-```bash
-./deploy.sh \
-  --host 203.0.113.45 \
-  --model "anthropic/claude-opus-4-6" \
-  --telegram-token "123456:ABC..." \
-  --api-key "sk-ant-..."
-```
-
-**Use OpenRouter with a different model:**
-
-```bash
-./deploy.sh \
-  --host 203.0.113.45 \
-  --model "openrouter/anthropic/claude-4.5-sonnet" \
-  --telegram-token "123456:ABC..." \
-  --api-key "sk-or-v1-..."
-```
-
----
-
-## Non-Root User
-
-**Deploy using a non-root SSH user:**
+### With Claude Subscription
 
 ```bash
 ./deploy.sh \
   --host 203.0.113.45 \
   --user ubuntu \
   --telegram-token "123456:ABC..." \
-  --api-key "sk-ant-..."
+  --telegram-user-id 987654321 \
+  --token "YOUR_SETUP_TOKEN"
 ```
 
-*Note: User needs sudo access for installation*
-
----
-
-## Multiple Agents
-
-**Deploy multiple agents on separate VPS instances:**
-
-```bash
-# Personal agent
-./deploy.sh \
-  --host 203.0.113.45 \
-  --name "personal-assistant" \
-  --telegram-token "111111:AAA..." \
-  --api-key "sk-ant-..."
-
-# Work agent
-./deploy.sh \
-  --host 203.0.113.46 \
-  --name "work-assistant" \
-  --telegram-token "222222:BBB..." \
-  --api-key "sk-ant-..."
-
-# Research agent
-./deploy.sh \
-  --host 203.0.113.47 \
-  --name "research-bot" \
-  --model "anthropic/claude-opus-4-6" \
-  --telegram-token "333333:CCC..." \
-  --api-key "sk-ant-..."
-```
-
----
-
-## Using OpenRouter
-
-**Deploy with OpenRouter instead of direct Anthropic:**
+### Fresh Installation (Wipe Existing)
 
 ```bash
 ./deploy.sh \
   --host 203.0.113.45 \
-  --model "openrouter/anthropic/claude-4.5-sonnet" \
+  --user ubuntu \
   --telegram-token "123456:ABC..." \
-  --api-key "sk-or-v1-your-openrouter-key"
+  --telegram-user-id 987654321 \
+  --api-key "sk-ant-..." \
+  --clean
+```
+
+### Custom Agent Name
+
+```bash
+./deploy.sh \
+  --host 203.0.113.45 \
+  --user ubuntu \
+  --telegram-token "123456:ABC..." \
+  --telegram-user-id 987654321 \
+  --api-key "sk-ant-..." \
+  --name "research-assistant"
+```
+
+### Different Model
+
+```bash
+./deploy.sh \
+  --host 203.0.113.45 \
+  --user ubuntu \
+  --telegram-token "123456:ABC..." \
+  --telegram-user-id 987654321 \
+  --api-key "sk-ant-..." \
+  --model "anthropic/claude-opus-4-6"
 ```
 
 ---
 
-## Post-Deployment Customization
+## Install-Only Deployment
 
-After deployment, SSH in and customize:
+Just install OpenClaw, configure later.
+
+### Basic Install
 
 ```bash
-ssh root@203.0.113.45
+./deploy.sh \
+  --host 203.0.113.45 \
+  --user ubuntu
+```
 
-# Edit agent identity
-nano /root/.openclaw/workspace/IDENTITY.md
+Then SSH in and configure:
+
+```bash
+ssh ubuntu@203.0.113.45
+openclaw onboard
+```
+
+---
+
+## Post-Deployment
+
+### Check Status
+
+```bash
+ssh ubuntu@203.0.113.45 'openclaw status'
+```
+
+### View Logs
+
+```bash
+ssh ubuntu@203.0.113.45 'openclaw logs --follow'
+```
+
+### Restart Gateway
+
+```bash
+ssh ubuntu@203.0.113.45 'openclaw gateway restart'
+```
+
+### Customize Agent
+
+```bash
+ssh ubuntu@203.0.113.45
+
+# Edit identity
+nano ~/.openclaw/workspace/IDENTITY.md
 
 # Edit personality
-nano /root/.openclaw/workspace/SOUL.md
+nano ~/.openclaw/workspace/SOUL.md
 
-# Add user context
-nano /root/.openclaw/workspace/USER.md
-
-# Restart to apply
-systemctl restart openclaw
+# Restart
+openclaw gateway restart
 ```
 
 ---
 
-## Updating OpenClaw
-
-**Get latest version:**
+## Update OpenClaw
 
 ```bash
-ssh root@203.0.113.45
+ssh ubuntu@203.0.113.45
 
 # Re-run installer
 curl -fsSL https://openclaw.ai/install.sh | bash
 
-# Restart gateway
-systemctl restart openclaw
+# Restart
+openclaw gateway restart
 ```
 
 ---
@@ -163,87 +145,40 @@ systemctl restart openclaw
 ### Backup
 
 ```bash
-# From your local machine
-rsync -avz root@203.0.113.45:/root/.openclaw/ ./backup-$(date +%Y%m%d)/
+# From local machine
+rsync -avz ubuntu@203.0.113.45:~/.openclaw/ ./backup-$(date +%Y%m%d)/
 ```
 
 ### Restore
 
 ```bash
-# To a new VPS
-rsync -avz ./backup-20260207/ root@203.0.113.46:/root/.openclaw/
-
-# Restart gateway
-ssh root@203.0.113.46 'systemctl restart openclaw'
+# To new VPS
+rsync -avz ./backup-20260207/ ubuntu@203.0.113.46:~/.openclaw/
+ssh ubuntu@203.0.113.46 'openclaw gateway restart'
 ```
 
 ---
 
-## Troubleshooting Examples
+## Troubleshooting
 
-### Check if gateway is running
+### Test Telegram Connection
 
-```bash
-ssh root@203.0.113.45 'systemctl status openclaw'
-```
-
-### View logs
+Send message to bot, then check logs:
 
 ```bash
-ssh root@203.0.113.45 'journalctl -u openclaw -f'
+ssh ubuntu@203.0.113.45 'openclaw logs --tail 50'
 ```
 
-### Restart gateway
+### Check Telegram Config
 
 ```bash
-ssh root@203.0.113.45 'systemctl restart openclaw'
+ssh ubuntu@203.0.113.45 'openclaw channels list'
 ```
 
-### Test Telegram connection
-
-Send a message to your bot via Telegram and check logs:
+### Gateway Not Running
 
 ```bash
-ssh root@203.0.113.45 'journalctl -u openclaw --tail=50'
-```
-
----
-
-## Advanced: Custom Config
-
-Deploy with defaults then edit config manually:
-
-```bash
-# Deploy
-./deploy.sh --host 203.0.113.45 --telegram-token "..." --api-key "..."
-
-# SSH in
-ssh root@203.0.113.45
-
-# Edit config
-nano /root/.openclaw/config.json
-
-# Restart
-systemctl restart openclaw
-```
-
-Example custom config sections:
-
-```json
-{
-  "agents": {
-    "defaults": {
-      "model": {
-        "primary": "anthropic/claude-opus-4-6",
-        "fallback": "anthropic/claude-sonnet-4-5"
-      },
-      "thinking": "low",
-      "sandbox": {
-        "mode": "non-main"
-      }
-    }
-  }
-}
+ssh ubuntu@203.0.113.45 'openclaw gateway start'
 ```
 
 ---
