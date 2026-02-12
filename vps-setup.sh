@@ -98,7 +98,7 @@ if [ "$DEPLOYMENT_MODE" = "managed" ]; then
       --anthropic-api-key "$AUTH_VALUE" \
       --gateway-port 18789 \
       --gateway-bind lan \
-      --skip-skills
+      --skip-skills || true
   elif [ "$AUTH_METHOD" = "token" ]; then
     openclaw onboard --non-interactive \
       --accept-risk \
@@ -108,7 +108,7 @@ if [ "$DEPLOYMENT_MODE" = "managed" ]; then
       --token-provider anthropic \
       --gateway-port 18789 \
       --gateway-bind lan \
-      --skip-skills
+      --skip-skills || true
   else
     echo "❌ Invalid auth method: $AUTH_METHOD"
     exit 1
